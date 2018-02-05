@@ -7,7 +7,7 @@
 	#include"stack.c"
 	#include"symbol.c"
 	#include"codegen.c"
-	#include"st4.c"
+	#include"ast.c"
 	#define YYSTYPE tnode*
 	extern FILE *yyin;
 	FILE* fout;
@@ -36,7 +36,7 @@
 prog : Declarations BEG Slist END SEMI {
 
 	 	showST();
-		fprintf(fout,"%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\nMOV SP, %d\n",0,2056,0,0,0,0,1,0,heapSize);
+		fprintf(fout,"%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\nMOV SP, %d\n",0,2056,0,0,0,0,1,0,staticSize);
 		codeGen($3,fout);
 		fprintf(fout,"INT 10\n");
 		printf("\nSuccessfully parsed program\n");
@@ -47,23 +47,22 @@ prog : Declarations BEG Slist END SEMI {
 	 	printf("Successfully parsed empty program\n");
 	 	exit(1);
 		};
-Declarations : DECL DeclList ENDDECL	{$$=$2;}
-				| DECL ENDDECL			{$$=createTree(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);}
+Declarations : DECL DeclList ENDDECL	{}
+				| DECL ENDDECL			{}
 			;
 
-DeclList : DeclList Decl	{$$ = createTree(NULL,NULL, NULL,tDCONNECT,NULL, $1,NULL, $2);}
-		| Decl 				{$$=$1;}
+DeclList : DeclList Decl	{}
+		| Decl 				{}
 		;
 
-Decl : Type VarList SEMI	{$$=assignTypeDecl($1,$2);}
+Decl : Type VarList SEMI	{assignTypeDecl($1,$2);}
 		;
 
 Type :	INT					{$$=createTypeNode(intType);}
 		|STR				{$$=createTypeNode(stringType);}
 		;
 
-VarList :VarList COMMA newVar {
-								$3->middle=$1;
+VarList :VarList COMMA newVar {	$3->middle=$1;
 								$$=$3; }
 		|newVar 				{
 								$1->middle=NULL;
@@ -71,41 +70,33 @@ VarList :VarList COMMA newVar {
 		
 newVar: ID			{
 					if(lookupSymbol($1->varname) == NULL){
-						insertSymbol($1->varname,NULL,tVAR,1,0,getHeapSpace(1));
-						$1->nodetype=tVAR;
+						insertSymbol($1->varname,NULL,tVAR,1,0,getStaticSpace(1));
 						$$=$1;
 				} else {
 					yyerror("Variable already declared\n");
-					exit(1);
 				}
 				}
 		|MUL ID { if(lookupSymbol($2->varname) == NULL){
-						insertSymbol($2->varname,NULL,tPVAR,1,0,getHeapSpace(1));
-						$2->nodetype=tPVAR;
+						insertSymbol($2->varname,NULL,tPVAR,1,0,getStaticSpace(1));
 						$$=$2;
 				} else {
 					yyerror("Variable already declared\n");
-					exit(1);
 				}
 		}
 		|ID '[' NUM ']'{
 			if(lookupSymbol($1->varname) == NULL){
-					insertSymbol($1->varname,NULL,tARR,$3->val,0,getHeapSpace($3->val));
-					$1->nodetype=tARR;
+					insertSymbol($1->varname,NULL,tARR,$3->val,0,getStaticSpace($3->val));
 					$$=$1;
 				} else {
 					yyerror("Variable already declared\n");
-					exit(1);
 				}
 		}
 		|ID '[' NUM ']' '[' NUM ']'{
 			if(lookupSymbol($1->varname) == NULL){
-					insertSymbol($1->varname,NULL,tDARR,$3->val,$6->val,getHeapSpace(($3->val)*($5->val)));
-					$1->nodetype=tDARR;
+					insertSymbol($1->varname,NULL,tDARR,$3->val,$6->val,getStaticSpace(($3->val)*($5->val)));
 					$$=$1;
 				} else {
 					yyerror("Variable already declared\n");
-					exit(1);
 				}
 		}
 		
@@ -117,6 +108,7 @@ Slist : Slist Stmt SEMI{
 	| Stmt SEMI{
 		$$=$1;
 	};
+	
 Stmt : InputStmt	//defaults to $$=$1
 		|OutputStmt
 		|AsgStmt 
@@ -131,18 +123,8 @@ Breakpoint: BRKP {
 	$$ = createTree(NULL,NULL, NULL,tBRKP,NULL, NULL,NULL, NULL);	
 	};
 
-InputStmt: READ '(' Expr ')'		{if($3->nodetype==tVAR ||$3->nodetype==tARR||$3->nodetype==tDARR){
-										if(lookupSymbol($3->varname) != NULL){
-											$3->Gentry = lookupSymbol($3->varname);
-										} else {
-											yyerror("Variable undeclared\n");
-											exit(1);
-										}
-									} else {
-											yyerror("Expected variable for Read\n");
-											exit(1);
-									}
-								$$= createReadNode($3);
+InputStmt: READ '(' Expr ')'		{
+										$$= createReadNode($3);
 								};
 
 OutputStmt: WRITE '(' Expr ')'	{	$$= createWriteNode($3);};
@@ -154,17 +136,16 @@ AsgStmt: Var '=' Expr {
 
 };
 Var: ID 			{	if(lookupSymbol($1->varname) != NULL){
+
 							$1->Gentry = lookupSymbol($1->varname);
 							
 							if(($1->Gentry)->nodetype!=tPVAR && (($1->Gentry)->nodetype!=tVAR)){
 								yyerror("Type mismatch: Not declared as variable: %s\n",$1->varname);
-								exit(1);
 							}
 							$1->nodetype=($1->Gentry)->nodetype;
 							$1->type=($1->Gentry)->type;
 						} else {
 							yyerror("Variable undeclared\n");
-							exit(1);
 						}
 						$$ = $1;
 					}
@@ -173,16 +154,14 @@ Var: ID 			{	if(lookupSymbol($1->varname) != NULL){
 							$2->Gentry = lookupSymbol($2->varname);
 							if(($2->Gentry)->nodetype!=tPVAR){
 								yyerror("Type mismatch: Not declared as pointer variable: %s\n",$2->varname);
-								exit(1);
 							}
-							printf("*p type %d %d\n",tPVAR, ($2->Gentry->type)-10);
-							$2->nodetype=tPVAR;			//nodetype says pointer
-							$2->type=($2->Gentry->type)-10;//type says not pointer
+							//printf("*p type %d %d\n",tPVAR, ($2->Gentry->type)-10);
+							$2->nodetype=tPVAR;				//nodetype says pointer
+							$2->type=($2->Gentry->type)-10;	//type says not pointer
 							
 							
 						} else {
 							yyerror("Variable undeclared\n");
-							exit(1);
 						}
 						$$ = $2;
 			
@@ -192,7 +171,6 @@ Var: ID 			{	if(lookupSymbol($1->varname) != NULL){
 								
 								if(($1->Gentry)->nodetype!=tARR){
 									yyerror("Type mismatch: Not declared as array: %s\n",$1->varname);
-									exit(1);
 								}
 								
 								$1->nodetype=tARR;
@@ -201,13 +179,13 @@ Var: ID 			{	if(lookupSymbol($1->varname) != NULL){
 								if($3->type==intType){
 									if(($3->nodetype==tNUM) && ( $3->val >= $1->Gentry->size)){
 										yyerror("Array out of bounds\n");
-										exit(1);
 									}
+								} else {
+									yyerror("Expected interger type as offset\n");
 								}
 								$1->middle=$3;
 							} else {
 								yyerror("Variable undeclared\n");
-								exit(1);
 							}				
 							$$ = $1;
 							}
@@ -216,27 +194,23 @@ Var: ID 			{	if(lookupSymbol($1->varname) != NULL){
 				$1->Gentry = lookupSymbol($1->varname);
 				if(($1->Gentry)->nodetype!=tDARR){
 					yyerror("Type mismatch: Not declared as double array: %s\n",$1->varname);
-					exit(1);
 				}
 				$1->nodetype=tDARR;
 				$1->type=($1->Gentry)->type;
 				if($3->type==intType){
 					if(($3->nodetype==tNUM) && ( $3->val >= $1->Gentry->size[0])){
 						yyerror(" Array out of bounds\n");
-						exit(1);
 					}
 				}
 				$1->middle=$3;
 				if($6->type==intType){
 					if(($6->nodetype==tNUM) && ( $6->val >= $1->Gentry->size[1])){
 						yyerror("Array out of bounds\n");
-						exit(1);
 					}
 				}
 				$1->right=$6;
 			} else {
 				yyerror("Variable undeclared:%s\n",$1->varname);
-				exit(1);
 			}				
 			$$ = $1;
 			}
@@ -300,15 +274,14 @@ Expr : Expr "+" Expr	{
 	| ID				{	if(lookupSymbol($1->varname) != NULL){
 								$1->Gentry = lookupSymbol($1->varname);
 								$1->type=($1->Gentry)->type;
-								if(($1->Gentry)->nodetype!=tVAR){
-									yyerror("Type mismatch: Expected Var Expr \n");
-										exit(1);
+								
+								if(($1->Gentry)->nodetype!=tVAR && ($1->Gentry)->nodetype!=tPVAR){
+									yyerror("Type mismatch: Expected Var or PVar \n");
 								}
-								$1->nodetype=tVAR;
+								$1->nodetype=($1->Gentry)->nodetype;
 								$$=$1;
 							} else {
 								yyerror("Variable undeclared\n");
-								exit(1);
 							}
 						$$ = $1;}
 	| MUL ID {		
@@ -321,11 +294,9 @@ Expr : Expr "+" Expr	{
 							$$=$2;
 						} else {
 							yyerror("Type mismatch: Expected Pointer\n");
-							exit(1);
 						}
 					} else {
 						yyerror("Variable undeclared\n");
-						exit(1);
 					}
 					$$ = $2;
 					}
@@ -339,13 +310,10 @@ Expr : Expr "+" Expr	{
 							$$=$2;
 						} else {
 							yyerror("Type mismatch: Expected Variable after &\n");
-							exit(1);
 						}
 					} else {
 						yyerror("Variable undeclared\n");
-						exit(1);
 					}
-					$2->nodetype=tREF;
 					$$ = $2;
 			}
 				
@@ -356,23 +324,19 @@ Expr : Expr "+" Expr	{
 								$1->type=($1->Gentry)->type;
 								if(($1->Gentry)->nodetype!=tARR){
 									yyerror("Type mismatch: Expected Array\n");
-										exit(1);
 								}
 								$1->nodetype=tARR;
 								if($3->type==intType){
 									$1->middle = $3;
 									if(($3->nodetype==tNUM) && ( $3->val >= $1->Gentry->size)){
-										yyerror("ERROR BIITTCHH: Array out of bounds\n");
-										exit(1);
+										yyerror("Array out of bounds\n");
 									}
 								} else {
 									yyerror("Expected integer type for array offset\n");
-									exit(1);
 								}
 								$$=$1;
 							} else {
 								yyerror("Variable undeclared\n");
-								exit(1);
 							}
 	
 	}
@@ -382,33 +346,27 @@ Expr : Expr "+" Expr	{
 								$1->type=($1->Gentry)->type;
 								if(($1->Gentry)->nodetype!=tDARR){
 									yyerror("Type mismatch: Expected Double Array\n");
-										exit(1);
 								}
 								$1->nodetype=tDARR;
 								if($3->type==intType){
 									$1->middle = $3;
 									if(($3->nodetype==tNUM) && ( $3->val >= $1->Gentry->size[0])){
-										yyerror("ERROR BIITTCHH: Array out of bounds\n");
-										exit(1);
+										yyerror("Array out of bounds\n");
 									}
 								} else {
 									yyerror("Expected integer type for array offset\n");
-									exit(1);
 								}
 								if($6->type==intType){
 									$1->right = $6;
 									if(($6->nodetype==tNUM) && ( $6->val >= $1->Gentry->size[1])){
 										yyerror("Array out of bounds\n");
-										exit(1);
 									}
 								} else {
 									yyerror("Expected integer type for array offset\n");
-									exit(1);
 								}
 								$$=$1;
 							} else {
 								yyerror("Variable undeclared\n");
-								exit(1);
 							}
 	
 	}
@@ -417,9 +375,20 @@ Expr : Expr "+" Expr	{
 	;
 %%
 
+int getStaticSpace(int size){
+	//upto 5119
+	if(staticSize+size >= 5119){
+		yyerror("No space for allocation\n");
+		exit(1);
+	}
+	staticSize+=size;
+	return staticSize-size;
+}
+
 yyerror(char const *s)
 {
-    printf("error: %s\n",s);
+	printf("error: %s\n",s);
+	exit(1);
 }
 
 

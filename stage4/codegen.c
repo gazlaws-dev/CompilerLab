@@ -8,8 +8,8 @@ int getReg(){
 		exit(0);
 	}
 	else {
-	reg++;
-	return reg-1;
+		reg++;
+		return reg-1;
 	}
 }
 
@@ -23,35 +23,25 @@ void freeAllReg(){
 	reg=0;
 }
 
-int getHeapSpace(int size){
-	heapSize+=size;
-	return heapSize-size;
-}
 
 int getLocReg(struct tnode* t,FILE *fp){
 	
 	int loc = t->Gentry->binding;
-	
-	if(t->Gentry!=NULL){
-		switch(t->nodetype){
-		case tREF:{
-			int reg = getReg();
-			fprintf(fp,"MOV R%d, %d\n",reg,loc);
-			return reg;
-		}
+
+	switch(t->nodetype){
+		case tREF:
 		case tPVAR:
 		case tVAR:{ 
 				int reg = getReg();
 				fprintf(fp,"MOV R%d, %d\n",reg,loc);
-				return reg;
-				}
+				return reg;}
 		case tARR:{
 				//this will geta new register anyway
 				int offsetReg = codeGen(t->middle,fp);
 				fprintf(fp,"ADD R%d, %d\n",offsetReg,loc);
 				return offsetReg;
 				}
-			
+		
 		case tDARR:{
 					int offsetReg = codeGen(t->middle,fp);
 					int  offsetCol = codeGen(t->right,fp);
@@ -63,10 +53,8 @@ int getLocReg(struct tnode* t,FILE *fp){
 					return offsetReg;
 		}
 		default: printf("getLoc failed %d\n",t->nodetype);	
-		}
-	} else {
-		printf("No binding in ST\n");
 	}
+
 }
 
 int codeGen(struct tnode* t,FILE *fp){
@@ -84,9 +72,9 @@ int codeGen(struct tnode* t,FILE *fp){
 		case tPVAR:
 		case tARR:
 		case tDARR:
-				reg = getReg();
-				loc = getLocReg(t,fp);
-				fprintf(fp,"MOV R%d, [R%d]\n", reg, loc);
+				reg = getReg();	//R2
+				loc = getLocReg(t,fp);	//R3 = 4098
+				fprintf(fp,"MOV R%d, [R%d]\n", reg, loc);	//MOV R2, [4098]
 				return reg;
 		
 		case tREF://p=&q;
@@ -105,7 +93,12 @@ int codeGen(struct tnode* t,FILE *fp){
 				fprintf(fp,"BRKP\n");
 				return -1;
 		case tREAD:
-				loc =  getLocReg(t->right,fp);
+				if(t->right->nodetype!=tDEREF){
+						loc =  getLocReg(t->right,fp);
+				} else {
+						t->right->nodetype=tVAR;
+						loc = codeGen(t->right,fp);
+					}
 				readCodeGen(loc,fp);
 				return -1;
 		case tWRITE:
@@ -121,7 +114,7 @@ int codeGen(struct tnode* t,FILE *fp){
 				
 		case tASSIGN:
 				reg = codeGen(t->right,fp);
-				if(t->left->nodetype==tPVAR && t->left->type!=pIntType && t->left->type!=pStringType){	//*p=...
+				if(t->left->nodetype==tPVAR && t->left->type!=pIntType && t->left->type!=pStringType){	//*p=... TODO make a isPointer variable //0,1..n
 					loc = codeGen(t->left,fp);	//now address of q is in loc (in a register)
 				}else {
 					loc = getLocReg(t->left,fp);

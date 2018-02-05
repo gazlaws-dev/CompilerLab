@@ -25,6 +25,25 @@ Gsymbol * lookupSymbol(char * name){
     return NULL;
 }
 
+void assignTypeDecl(struct tnode *typeNode, struct tnode *varlist){
+
+	Gsymbol * t = NULL;
+	
+	while(varlist!=NULL){
+		t = lookupSymbol(varlist->varname);
+		
+		switch(t->nodetype){	//var, pvar, arr
+			case tPVAR: t->type = typeNode->type + 10;		///MAGIC NUMBER DON'T REARRANGE HEADER
+									//str, int
+						break;
+			default: t->type = typeNode->type;
+						break;
+		}
+		varlist=varlist->middle;
+	}
+}
+
+
 void showST(){
 	struct Gsymbol* current = symtable;  // Initialize current
 	printf("------------Symbol Table-------------------\n");

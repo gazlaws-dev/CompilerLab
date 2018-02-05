@@ -1,0 +1,33 @@
+decl
+	int a,b,*c,*d;
+enddecl
+
+begin
+	a=10;
+	c=&a;
+	*c=20+a;
+	d=c;
+	write(*d);
+	read(*d);
+	write(a);
+end;
+
+
+
+
+
+	//won't work
+	//a=&a;
+	//a=c;
+	//c=20;
+	
+	//would work
+	//c=&c;
+	//a=*c;
+	//p=c;
+	//todo pointer to pointer
+
+
+	//read(*e);
+	
+	//todo fix this case^

@@ -52,7 +52,7 @@ int memory[26];
 struct StackNode* breakstack;
 struct StackNode* contstack;
 Gsymbol * symtable = NULL;
-int heapSize = 4096;
+int staticSize = 4096;
 char * typeToString(int type);
 
 struct Gsymbol *lookup(char * name); // Returns a pointer to the symbol table entry for the variable, returns NULL otherwise.
