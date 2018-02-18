@@ -59,7 +59,7 @@ struct Lsymbol* lInstall(char *name, int type, int binding);
 
 struct Gsymbol * symtable = NULL;
 struct lstList * allLST = NULL;
-char currentLST[100] = NULL;
+char currFunc[100] = NULL;
 
 
 // A structure to represent a stack
@@ -73,7 +73,7 @@ typedef struct tnode {
 	int type;	//type of variable
 	char* name;	//name of a variable for ID nodes  
 	int nodetype;  // information about non-leaf nodes - read/write/connector/+/* etc. 
-	struct Gsymbol *Gentry; //pointerto GST entry for global variables and functions 
+	struct tableEntry *entry; //pointerto entry for global variables and functions 
 	struct tnode *left,*middle,*right;	//left and right branches   
 }tnode;
 

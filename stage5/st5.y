@@ -55,7 +55,6 @@ GDeclList  : GDeclList GDecl {}
 
 GDecl	  : Type Gidlist ';'	{
 									gAssignTypeDecl($1, $2);
-									//assign it in lst also
 								}
 ;
 
@@ -63,12 +62,11 @@ Type :	INT					{$$=createTypeNode(intType);}
 		|STR				{$$=createTypeNode(stringType);}
 		;
 
-Gidlist	: Gidlist ',' Gid	{
-								showST();
+Gidlist	: Gidlist ',' Gid	{	showST();
 								$3->middle=$1;
 								$$=$3;
 								}
-		|Gid				{	
+		|Gid				{
 								$1->middle=NULL;
 								$$=$1;
 							} 
@@ -80,10 +78,7 @@ Gid		:  ID			{
 				}
 			|ID '(' ParamList ')'	{
 									gInstall($1->name,NULL,tFUNC, 0,0,NULL, $3,getFLabel());
-									printf("new func: %s\n",$2->name);
-									lstListInstall($1->name);
-									//currLST = lstListLookup($2->name);
-									lInstall($1->name,$1->type,0);	//set type later;get dynamic space
+									
 									$$=$1;
 									}
 		;
@@ -94,50 +89,73 @@ FDefBlock:	FDefBlock Fdef
 			|Fdef;
 			
 Fdef:		Type newFID '(' ParamList ')' '{' LdeclBlock Body '}'  {
-							gUpdate($2->name,$1->type,$4,$7,$8);
+							//gUpdate($2->name,$1->type,$4,$7,$8); //why here?
+							//TODO create connector node thing?
+							
+							
 							}
 	;
 newFID: ID {
-			struct Lsymbol* currLST =lstListLookup($1->name);
-						if(currLST!=NULL){
-							strcpy(currentLST,$1->name);
-						} else {
-							yyerror("Did not declare this func\n");
-						}
+						
+			struct localTable* currTable = gLookup($1->name);
+			if(currTable!=NULL){
+				localTableCreate($1->name);
+				strcpy(currFunc,$1->name);
+			} else {
+					yyerror("Did not declare this func\n");
+			}
 };
 
-ParamList	:  ParamList ',' Param  { 	
-										$3->middle=$1;
-										$$=$3;}
-		   |  Param	{			lstListLookup(currentLST);
-		   						lInstall(,$1->type,0);
-		   					$$=$1; }
-		   |  //There can be functions with no parameters
+ParamList	:  ParamList ',' Param  {
+						localEntryCreate(currFunc, $3->name, $3->type, getLocalSpace());
+						}
+		   |  Param	{	
+					localEntryCreate(currFunc, $1->name, $1->type, getLocalSpace());
+					}
+		   | 
 ;
 
-Param		: Type ID {///?
+Param		: Type ID {
+						$2->type = $1->type;
+						$$=$1;
 						}
 		   ;
+				
+LdeclBlock: DECL LDecList ENDDECL | DECL ENDDECL{}
+;
+LDecList :LDecList LDecl ';'{}
 
-
-////////
-//							
-LdeclBlock: DECL LDecList ENDDECL | DECL ENDDECL{};
-
-LDecList :LDecList LDecl ';'| LDecl ';'
+| LDecl ';'	
 ;
 
-LDecl:Type IdList 
+LDecl: Type IdList {
+						addIdListToLocal($1, $2);
+					}
 ;
 
-IdList:IdList ',' ID 
-	| ID;
+IdList: IdList ',' ID {
+				$3->middle =$1;
+				$$=$3;
+			}
+		| ID	{
+				$$=$1;
+		};
 
 ///////////
 
-Body	  : BEG Slist Retstmt END
+Body	  : BEG Slist Retstmt END {
+				//TODO makeFuncBodyNode;
+			}
 		  ;
-Retstmt : RETURN ';'{};
+Retstmt : RETURN Expr';'{
+				struct globalEntry * gEntry= gLookup(currFunc);
+				if($2->type==gEntry->type){
+					//TODO
+					$$=makeRetNode($2);
+				}else {
+				yyerror("Return Type mismatch\n");
+				}
+};
 
 Slist : Slist Stmt ';' {
 		$$ = createTree(NULL,NULL, NULL,tCONNECT,NULL, $1,NULL, $2);
@@ -172,15 +190,23 @@ AsgStmt: Var '=' Expr {
 					$$ = createAsgNode($1, $3);
 
 };
-Var: ID 			{	if(gLookup($1->name) != NULL){
+Var: ID 			{	if(lookup($1->name) != NULL){
 
-							$1->Gentry = gLookup($1->name);
+							$1->entry = lookup($1->name);
 							
-							if(($1->Gentry)->nodetype!=tPVAR && (($1->Gentry)->nodetype!=tVAR)){
-								yyerror("Type mismatch: Not declared as variable: %s\n",$1->name);
+							if($1->entry->isLoc){
+								if((($1->entry->localEntry)->nodetype!=tVAR)){
+									yyerror("Type mismatch: Not declared as variable: %s\n",$1->name);
+								}
+								$1->nodetype=($1->entry->localEntry)->nodetype;
+								$1->type=($1->entry->localEntry)->type;
+							} else {
+								if((($1->entry->globalEntry)->nodetype!=tVAR)){
+									yyerror("Type mismatch: Not declared as variable: %s\n",$1->name);
+								}
+								$1->nodetype=($1->entry->globalEntry)->nodetype;
+								$1->type=($1->entry->globalEntry)->type;
 							}
-							$1->nodetype=($1->Gentry)->nodetype;
-							$1->type=($1->Gentry)->type;
 						} else {
 							yyerror("Variable undeclared\n");
 						}
@@ -237,39 +263,61 @@ Expr : Expr "+" Expr	{
 						}
 	| '(' Expr ')'		{$$ = $2;}
 	| NUM				{$$ = $1;}
-	| ID				{	if(gLookup($1->name) != NULL){
-								$1->Gentry = gLookup($1->name);
-								$1->type=($1->Gentry)->type;
+	| ID				{	if(lookup($1->name) != NULL){
+								$1->entry = lookup($1->name);
+								//lookup creates the entry acc to where it finds the var declared
+								if($1->entry->isLoc){
 								
-								if(($1->Gentry)->nodetype!=tVAR && ($1->Gentry)->nodetype!=tPVAR){
-									yyerror("Type mismatch: Expected Var or PVar \n");
+									$1->type=($1->entry->localEntry)->type;
+								
+									if(($1->entry->localEntry)->nodetype!=tVAR){
+										yyerror("Type mismatch: Expected Var \n");
+									}
+									$1->nodetype=($1->entry->localEntry)->nodetype;
+									$$=$1;
+								
 								}
-								$1->nodetype=($1->Gentry)->nodetype;
-								$$=$1;
+								else {
+									$1->type=($1->entry->globalEntry)->type;
+								
+									if(($1->entry->globalEntry)->nodetype!=tVAR){
+										yyerror("Type mismatch: Expected Var \n");
+									}
+									$1->nodetype=($1->entry->globalEntry)->nodetype;
+									$$=$1;
+								
+								}
+						
 							} else {
 								yyerror("Variable undeclared\n");
 							}
 						$$ = $1;}	
 	| LIT {$$ = $1;}
 	| ID '(' ArgList ')'  {
-//								gtemp = GLookup($1->name);
-//								if(gtemp == NULL){
-//									yyerror("Yacc : Undefined function");exit(1);
-//								}
-//								//$$ = TreeCreate(gtemp->type,NODETYPE_FUNCTION,$1->name,(union Constant){},$3,NULL,NULL,NULL);
-								//$$->Gentry = gtemp;
+							
+							struct globalEntry* gtemp = gLookup($1->name);
+							
+	
+								if(gtemp == NULL){
+									yyerror("Yacc : Undefined function");
+								}
+								//TODO
+								//check arg list
+								$$ = makeFuncNode();
+								$$->entry = gtemp;
+								
+							strcpy(currFunc,$1->name);
 							  }
 ;
 
-ArgList: ArgList ',' Expr 
-		| Expr 
+ArgList: ArgList ',' Expr {}
+		| Expr {}
 ;
 
 MainBlock : INT MAIN '(' ')' '{' LdeclBlock Body '}'
 								{
 									gInstall("main",intType,tFUNC,0,0,0,NULL,getFLabel());
-									//gtemp = gInstall("MAIN",inttype,0,NULL);
-									//...Some more work to be done
+									//TODO...Some more work to be done
 								}
 ;
 
@@ -292,6 +340,8 @@ yyerror(char const *s)
 	exit(1);
 }
 
+//TODO fix this
+void getLocalSpace(){return;}
 
 int main(int argc, char* argv[])
 {

@@ -1,10 +1,10 @@
-struct tnode* createTree(int val,int type, char* c, int nodetype, struct Gsymbol * st, struct tnode *l,struct tnode *m, struct tnode *r){
+struct tnode* createTree(int val,int type, char* c, int nodetype, struct tableEntry * st, struct tnode *l,struct tnode *m, struct tnode *r){
 	struct tnode* t = (struct tnode*)malloc(sizeof(struct tnode));
 	t->val = val;
 	t->type = type;
 	t->name = c;
 	t->nodetype= nodetype;
-	t->Gentry=st;
+	t->entry=st;
 	t->left = l;
 	t->middle = m;
 	t->right = r;
