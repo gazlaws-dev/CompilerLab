@@ -6,7 +6,7 @@
 	#include"st5.h"
 	#include"stack.c"
 	#include"symbol.c"
-	#include"codegen.c"
+	//#include"codegen.c"
 	#include"ast.c"
 	#define YYSTYPE tnode*
 	extern FILE *yyin;
@@ -53,16 +53,17 @@ GDeclList  : GDeclList GDecl {}
 		   | GDecl {}
 		   ;
 
-GDecl	  : Type Gidlist ';'	{
+GDecl	  : Type Gidlist ';'	{	
 									gAssignTypeDecl($1, $2);
 								}
 ;
 
-Type :	INT					{$$=createTypeNode(intType);}
+Type :	INT					{
+								$$=createTypeNode(intType);}
 		|STR				{$$=createTypeNode(stringType);}
 		;
 
-Gidlist	: Gidlist ',' Gid	{	showST();
+Gidlist	: Gidlist ',' Gid	{	
 								$3->middle=$1;
 								$$=$3;
 								}
@@ -76,23 +77,26 @@ Gid		:  ID			{
 						gInstall($1->name,NULL,tVAR,1,0,getStaticSpace(1),NULL,NULL);
 						$$=$1;
 				}
-			|ID '(' ParamList ')'	{
+			|fID '(' ParamList ')'	{
 									gInstall($1->name,NULL,tFUNC, 0,0,NULL, $3,getFLabel());
-									
 									$$=$1;
 									}
 		;
-		   
+		
+fID : ID {
+									currFunc=strdup($1->name);
+}
+;	   
 ////////////////////////////////////////////
 
 FDefBlock:	FDefBlock Fdef
-			|Fdef;
+			|Fdef{};
 			
-Fdef:		Type newFID '(' ParamList ')' '{' LdeclBlock Body '}'  {
+Fdef:		Type newFID '(' validParamList ')' '{' LdeclBlock Body '}'  {
 							//gUpdate($2->name,$1->type,$4,$7,$8); //why here?
-							//TODO create connector node thing?
 							
-							
+							//$8 is a (slist+return) statement node
+							$$ = createFuncDefNode($1->type,$2->name,$8);
 							}
 	;
 newFID: ID {
@@ -100,32 +104,39 @@ newFID: ID {
 			struct localTable* currTable = gLookup($1->name);
 			if(currTable!=NULL){
 				localTableCreate($1->name);
-				strcpy(currFunc,$1->name);
+				currFunc=strdup($1->name);
 			} else {
 					yyerror("Did not declare this func\n");
 			}
 };
 
-ParamList	:  ParamList ',' Param  {
-						localEntryCreate(currFunc, $3->name, $3->type, getLocalSpace());
-						}
-		   |  Param	{	
-					localEntryCreate(currFunc, $1->name, $1->type, getLocalSpace());
-					}
-		   | 
+validParamList: ParamList {
+						paramCheck(currFunc);
+}
 ;
 
-Param		: Type ID {
+ParamList	:  ParamList ',' Param  {
+						localEntryCreate(currFunc, $3->name, $3->type, getLocalSpace());
+						$3->middle=$1;
+						$$=$3;
+						}
+		   |  Param	{
+						localEntryCreate(currFunc, $1->name, $1->type, getLocalSpace());
+						
+					}
+			|
+;
+
+Param		: Type ID {	
 						$2->type = $1->type;
-						$$=$1;
+						$$=$2;
 						}
 		   ;
 				
 LdeclBlock: DECL LDecList ENDDECL | DECL ENDDECL{}
 ;
 LDecList :LDecList LDecl ';'{}
-
-| LDecl ';'	
+		| LDecl ';'	
 ;
 
 LDecl: Type IdList {
@@ -144,18 +155,19 @@ IdList: IdList ',' ID {
 ///////////
 
 Body	  : BEG Slist Retstmt END {
-				//TODO makeFuncBodyNode;
+				$$ = createFuncBodyNode($2, $3);
 			}
 		  ;
 Retstmt : RETURN Expr';'{
 				struct globalEntry * gEntry= gLookup(currFunc);
 				if($2->type==gEntry->type){
-					//TODO
-					$$=makeRetNode($2);
+					$$=createRetNode($2);
 				}else {
 				yyerror("Return Type mismatch\n");
 				}
-};
+				}
+		| RETURN ';'
+;
 
 Slist : Slist Stmt ';' {
 		$$ = createTree(NULL,NULL, NULL,tCONNECT,NULL, $1,NULL, $2);
@@ -195,10 +207,7 @@ Var: ID 			{	if(lookup($1->name) != NULL){
 							$1->entry = lookup($1->name);
 							
 							if($1->entry->isLoc){
-								if((($1->entry->localEntry)->nodetype!=tVAR)){
-									yyerror("Type mismatch: Not declared as variable: %s\n",$1->name);
-								}
-								$1->nodetype=($1->entry->localEntry)->nodetype;
+								$1->nodetype=tVAR;
 								$1->type=($1->entry->localEntry)->type;
 							} else {
 								if((($1->entry->globalEntry)->nodetype!=tVAR)){
@@ -266,14 +275,11 @@ Expr : Expr "+" Expr	{
 	| ID				{	if(lookup($1->name) != NULL){
 								$1->entry = lookup($1->name);
 								//lookup creates the entry acc to where it finds the var declared
+								
 								if($1->entry->isLoc){
 								
 									$1->type=($1->entry->localEntry)->type;
-								
-									if(($1->entry->localEntry)->nodetype!=tVAR){
-										yyerror("Type mismatch: Expected Var \n");
-									}
-									$1->nodetype=($1->entry->localEntry)->nodetype;
+									$1->nodetype=tVAR;
 									$$=$1;
 								
 								}
@@ -294,33 +300,29 @@ Expr : Expr "+" Expr	{
 						$$ = $1;}	
 	| LIT {$$ = $1;}
 	| ID '(' ArgList ')'  {
+							currFunc=strdup($1->name);
 							
-							struct globalEntry* gtemp = gLookup($1->name);
-							
-	
-								if(gtemp == NULL){
-									yyerror("Yacc : Undefined function");
-								}
-								//TODO
-								//check arg list
-								$$ = makeFuncNode();
-								$$->entry = gtemp;
-								
-							strcpy(currFunc,$1->name);
+							$$ = createFuncCallNode($1->name,$3);
 							  }
 ;
 
-ArgList: ArgList ',' Expr {}
-		| Expr {}
+ArgList: ArgList ',' Expr {$3->middle=$1;
+							$$=$3;}
+		| Expr {$$=$1;}
 ;
 
-MainBlock : INT MAIN '(' ')' '{' LdeclBlock Body '}'
-								{
-									gInstall("main",intType,tFUNC,0,0,0,NULL,getFLabel());
+MainBlock : Main '(' ')' '{' LdeclBlock Body '}'
+								{	
 									//TODO...Some more work to be done
 								}
 ;
 
+Main: INT MAIN {
+		currFunc=strdup("main");
+		gInstall("main",intType,tFUNC,0,0,0,NULL,getFLabel());
+		localTableCreate("main");
+	}
+;
 
 %%
 

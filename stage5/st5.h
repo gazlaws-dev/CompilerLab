@@ -38,7 +38,9 @@
 #define tDEREF 36
 #define tSTRCAT 37
 #define tFUNC 38
-
+#define tFCALL 39
+#define tRET 40
+#define tBODY 41
 
 int reg;
 int label;
@@ -50,16 +52,12 @@ int staticSize = 4096;
 char * typeToString(int type);
 
 
-struct Gsymbol * gLookup(char * name);
-
-struct Lsymbol* lLookup(char *name);
-struct Lsymbol* lInstall(char *name, int type, int binding);
+struct globalEntry * gLookup(char * name);
 
 
-
-struct Gsymbol * symtable = NULL;
-struct lstList * allLST = NULL;
-char currFunc[100] = NULL;
+struct globalEntry * symtable = NULL;
+struct tableEntry * allLST = NULL;
+char *currFunc;
 
 
 // A structure to represent a stack

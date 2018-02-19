@@ -2,8 +2,8 @@ struct tableEntry{
 	int isLoc;
 	struct globalEntry* globalEntry;
 	struct localEntry* localEntry;
-}
-
+	struct localTable* localTable;
+};
 
 struct globalEntry{
 	char *name; //name of the variable or function
@@ -60,54 +60,37 @@ struct localTable* localTableCreate(char *name){
 }
 
 
-struct localTable* localTableCreate(char *name){
-	
-	if(localTableLookup(name) == NULL){
-		struct localTable* table = (struct localTable*) malloc(sizeof(struct localTable));
-		table->funcName = strdup(name);
-		table->next = allLST;
-		allLST = table;
-		return table;
-	} else {
-		yyerror("Function already declared\n");
-		return NULL;
-	}
-}
-
-
-
 
 void localEntryCreate(char *funcName, char *varName, int type, int binding){
 
 	struct localTable * current = localTableLookup(funcName);  
-	//type checking done later TODO
+	//create if it's there in global, in the same order??
 	
     if (current != NULL)
     {
-        struct localEntry * currParam =  (struct localEntry*) malloc(sizeof(struct localEntry));;
+        struct localEntry * currParam =  (struct localEntry*) malloc(sizeof(struct localEntry));
         currParam->name = strdup(varName);
         currParam->type = type;
         currParam->binding=binding;
-        currParam->middle = current->localEntry;
-        current->localEntry =currParam;        
+        currParam->next = current->localEntry;
+        current->localEntry =currParam;
     }
     return NULL;
 }
 
-//TODO param list positions check
 int paramCheck(char * funcName){
 	struct globalEntry * gEntry = gLookup(funcName);
-	struct *localTable lTable = localTableLookup(funcName);
+	struct localTable * lTable = localTableLookup(funcName);
 	
-	struct *tnode gParam = gEntry->paramlist;
-	struct *localEntry lParam = lTable->localEntry;
+	struct tnode * gParam = gEntry->paramlist;
+	struct localEntry * lParam = lTable->localEntry;
 	
 	
 	
 	while(gParam!=NULL && lParam!=NULL){
 		if (gParam->type==lParam->type && (strcmp(gParam->name,lParam->name)==0)){
             gParam=gParam->middle;
-            lParam=lParam->middle;
+            lParam=lParam->next;
         } else {
         	yyerror("Parameter name/type mismatch");
         }
@@ -125,7 +108,7 @@ struct localEntry * localEntryLookup(char * funcName, char * varName){
     struct localTable * current = allLST;
     while (current != NULL)
     {
-        if (strcmp(name,current->funcName)==0){
+        if (strcmp(funcName,current->funcName)==0){
             break;
     }
         current = current->next;
@@ -134,10 +117,10 @@ struct localEntry * localEntryLookup(char * funcName, char * varName){
     	 struct localEntry * currEntry = current->localEntry;
     	 while (currEntry != NULL)
 			{
-				if (strcmp(name,currEntry->name)==0){
+				if (strcmp(varName,currEntry->name)==0){
 				    return currEntry;
 			}
-				currEntry = currEntry->middle;
+				currEntry = currEntry->next;
 			}
     	 
     }
@@ -159,7 +142,7 @@ struct globalEntry * gLookup(char * name){
 
 struct tableEntry * lookup(char * name){
 
-	struct tableEntry * entryForVar = (struct * tableEntry)malloc(sizeof(struct tableEntry));
+	struct tableEntry * entryForVar = (struct tableEntry *)malloc(sizeof(struct tableEntry));
 	
 	struct localEntry * loc = localEntryLookup(currFunc, name);
 	struct globalEntry* glo = gLookup(name);
@@ -231,15 +214,23 @@ void gAssignTypeDecl(struct tnode *typeNode, struct tnode *varlist){
 
 
 void addIdListToLocal(struct  tnode * typeNode, struct  tnode * idList){
-//for each id, make and localEntry in localTable
+//for each id, make and localEntry in localTable for "currFunc"
 
 	struct localTable * currTable = localTableLookup(currFunc);
-	struct localEntry * lookupEntry = localEntryLookup(currFunc, idList->name);
+	struct localEntry * lookupEntry = localEntryLookup(currFunc,idList->name);
 	
+	if(lookupEntry!=NULL){
+			yyerror("Variable name already used\n");
+		}
+		
 	while(idList!=NULL && lookupEntry==NULL){
+		lookupEntry = localEntryLookup(currFunc, idList->name);
+		
+		if(lookupEntry!=NULL){
+			yyerror("Variable name already used\n");
+		}
 		localEntryCreate(currFunc, idList->name, typeNode->type,getLocalSpace());
 		idList=idList->middle;
-		lookupEntry = localEntryLookup(currFunc, idList->name);
 	}
 	return;
 }
@@ -253,6 +244,7 @@ int getFLabel(){
 
 void showST(){
 	struct globalEntry* current = symtable;  // Initialize current
+	struct localTable* currLocal = symtable;
 	printf("------------Symbol Table-------------------\n");
     while (current != NULL)
     {
@@ -267,19 +259,19 @@ void showST(){
         current = current->next;
     }
     
-    current = allLST;
+    currLocal = allLST;
     printf("------------Local Symbol Tables-------------------\n");
-    while (current != NULL)
-    {	struct localEntry* lv = current->localEntry;
-        printf("Name:%9.9s\n", current->funcName);	//params in st's names
+    while (currLocal != NULL)
+    {	struct localEntry* lv = currLocal->localEntry;
+        printf("Name:%9.9s\n", currLocal->funcName);	//params in st's names
         	
 			while(lv!=NULL){
 				printf("\tLocal vars: %s, %s\n",lv->name, typeToString(lv->type));
-				pl=pl->next;
+				lv=lv->next;
 			}
-        current = current->next;
+        currLocal = currLocal->next;
     }
-    
+    printf("--------------------------------------------------\n\n");
 }
 
 

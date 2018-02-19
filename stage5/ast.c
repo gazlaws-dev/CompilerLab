@@ -26,6 +26,69 @@ struct tnode * createTypeNode(int type){
 }
 
 
+struct tnode * createRetNode(struct tnode* expr){
+	struct globalEntry* gentry = gLookup(currFunc);
+	if(expr->type==gentry->type){
+		return createTree(NULL,expr->type, NULL,tRET,NULL,NULL,expr,NULL);
+	} else {
+		yyerror("Return type mismatch\n");
+	}
+}
+
+struct tnode * createFuncBodyNode(struct tnode* slist, struct tnode* ret){
+	return createTree(NULL,ret->type, NULL, tBODY, NULL,slist, NULL ,ret);
+}
+
+struct tnode * createFuncDefNode(int retType, char *funcName, struct tnode* body){
+	
+	struct globalEntry* gentry = gLookup(funcName);
+	struct localTable* lentry = localTableLookup(funcName);
+	struct tableEntry* entry = (struct tableEntry*) malloc(sizeof(struct tableEntry));
+	entry->globalEntry= gentry;
+	entry->localTable=lentry;
+	entry->isLoc=2;
+	
+	
+	if(gentry->type==retType==body->type){
+	
+		return createTree(NULL,retType, funcName, tFUNC, entry ,NULL, body ,NULL);
+	}
+
+}
+
+
+struct tnode * createFuncCallNode(char * funcName, struct tnode * argList){
+	
+	struct tableEntry * entry = (struct tableEntry *) malloc (sizeof(struct tableEntry));
+	struct globalEntry* gtemp = gLookup(funcName);
+	struct tnode* paramlist, *arglist;
+	
+	if(gtemp == NULL){
+					yyerror("Yacc : Undeclared function");
+		}
+	
+	paramlist = gtemp->paramlist;
+	while(paramlist!=NULL && arglist!=NULL){
+		if(paramlist->type!=arglist->type){
+			yyerror("Arguments type mismatch\n");
+		}
+		paramlist=paramlist->middle;
+		arglist=arglist->middle;
+	}
+	if((paramlist!=NULL && arglist==NULL) || (paramlist==NULL && arglist!=NULL)){
+		yyerror("Parameter-argument number mismatch\n");
+	}
+	
+	entry->isLoc=0;
+	entry->globalEntry=gtemp;
+	
+	return createTree(NULL,gtemp->type, funcName, tFCALL, entry ,NULL, argList ,NULL);
+	
+}
+
+
+
+
 //int/str *p,*c
 //int/str q, a
 
