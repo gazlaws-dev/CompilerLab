@@ -36,19 +36,22 @@
 #define tBRKP 34
 #define tREF 35
 #define tDEREF 36
-#define tSTRCAT 37
+
 #define tFUNC 38
 #define tFCALL 39
 #define tRET 40
 #define tBODY 41
 
-int reg;
+int tempreg;
 int label;
 int funcLabel=1;
+int tempCount=0;
 int memory[26];
 struct StackNode* breakstack;
 struct StackNode* contstack;
-int staticSize = 4096;
+int staticSize = 4096;	//leave space for main's return value and return address?
+int localOffset=1;
+int argOffset=-3;
 char * typeToString(int type);
 
 

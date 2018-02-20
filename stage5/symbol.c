@@ -266,7 +266,7 @@ void showST(){
         printf("Name:%9.9s\n", currLocal->funcName);	//params in st's names
         	
 			while(lv!=NULL){
-				printf("\tLocal vars: %s, %s\n",lv->name, typeToString(lv->type));
+				printf("\tLocal vars: %s, %s,%d\n ",lv->name, typeToString(lv->type),lv->binding);
 				lv=lv->next;
 			}
         currLocal = currLocal->next;

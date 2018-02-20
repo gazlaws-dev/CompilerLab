@@ -6,7 +6,7 @@
 	#include"st5.h"
 	#include"stack.c"
 	#include"symbol.c"
-	//#include"codegen.c"
+	#include"codegen.c"
 	#include"ast.c"
 	#define YYSTYPE tnode*
 	extern FILE *yyin;
@@ -34,6 +34,10 @@
 
 prog : GDeclBlock FDefBlock MainBlock {
 	 	showST();
+	 	fprintf(fout,"%d\nMAIN\n%d\n%d\n%d\n%d\n%d\n%d\nMOV SP, %d\n",0,0,0,0,0,1,0,staticSize);
+	 	codeGen($2,fout);
+	 	codeGen($3,fout);
+	 	fprintf(fout,"INT 10\n");
 		printf("\nSuccessfully parsed program with fdecl\n");
 		exit(1);
 		}
@@ -77,11 +81,22 @@ Gid		:  ID			{
 						gInstall($1->name,NULL,tVAR,1,0,getStaticSpace(1),NULL,NULL);
 						$$=$1;
 				}
-			|fID '(' ParamList ')'	{
+			|fID '(' newParamList ')'	{
 									gInstall($1->name,NULL,tFUNC, 0,0,NULL, $3,getFLabel());
 									$$=$1;
 									}
 		;
+		
+newParamList	:  ParamList ',' Param  {
+						localEntryCreate(currFunc, $3->name, $3->type, NULL);
+						$3->middle=$1;
+						$$=$3;
+						}
+		   |  Param	{
+						localEntryCreate(currFunc, $1->name, $1->type, NULL);
+					}
+			|
+;
 		
 fID : ID {
 									currFunc=strdup($1->name);
@@ -89,14 +104,14 @@ fID : ID {
 ;	   
 ////////////////////////////////////////////
 
-FDefBlock:	FDefBlock Fdef
-			|Fdef{};
+FDefBlock:	Fdef{$$=$1;};
 			
 Fdef:		Type newFID '(' validParamList ')' '{' LdeclBlock Body '}'  {
 							//gUpdate($2->name,$1->type,$4,$7,$8); //why here?
 							
 							//$8 is a (slist+return) statement node
 							$$ = createFuncDefNode($1->type,$2->name,$8);
+							resetLocalSpace();
 							}
 	;
 newFID: ID {
@@ -111,17 +126,18 @@ newFID: ID {
 };
 
 validParamList: ParamList {
+						//Name Equivalence
 						paramCheck(currFunc);
 }
 ;
 
 ParamList	:  ParamList ',' Param  {
-						localEntryCreate(currFunc, $3->name, $3->type, getLocalSpace());
+						localEntryCreate(currFunc, $3->name, $3->type, getArgSpace());
 						$3->middle=$1;
 						$$=$3;
 						}
 		   |  Param	{
-						localEntryCreate(currFunc, $1->name, $1->type, getLocalSpace());
+						localEntryCreate(currFunc, $1->name, $1->type, getArgSpace());
 						
 					}
 			|
@@ -155,7 +171,7 @@ IdList: IdList ',' ID {
 ///////////
 
 Body	  : BEG Slist Retstmt END {
-				$$ = createFuncBodyNode($2, $3);
+				$$ = createFuncBodyNode($2, $3);	//tBODY
 			}
 		  ;
 Retstmt : RETURN Expr';'{
@@ -169,6 +185,27 @@ Retstmt : RETURN Expr';'{
 		| RETURN ';'
 ;
 
+
+
+MainBlock : Main '(' ')' '{' LdeclBlock Body '}'
+								{	
+									//TODO...Some more work to be done
+									//$6 has body
+									$$ = createFuncDefNode($1->type,"main",$6);
+									resetLocalSpace();
+									
+								}
+;
+
+Main: INT MAIN {
+		currFunc=strdup("main");
+		gInstall("main",intType,tFUNC,0,0,0,NULL,NULL);
+		localTableCreate("main");
+		$$=$1;
+	}
+;
+
+////////
 Slist : Slist Stmt ';' {
 		$$ = createTree(NULL,NULL, NULL,tCONNECT,NULL, $1,NULL, $2);
 	}
@@ -311,18 +348,7 @@ ArgList: ArgList ',' Expr {$3->middle=$1;
 		| Expr {$$=$1;}
 ;
 
-MainBlock : Main '(' ')' '{' LdeclBlock Body '}'
-								{	
-									//TODO...Some more work to be done
-								}
-;
 
-Main: INT MAIN {
-		currFunc=strdup("main");
-		gInstall("main",intType,tFUNC,0,0,0,NULL,getFLabel());
-		localTableCreate("main");
-	}
-;
 
 %%
 
@@ -342,13 +368,22 @@ yyerror(char const *s)
 	exit(1);
 }
 
-//TODO fix this
-void getLocalSpace(){return;}
+int getLocalSpace(){
+	return localOffset++;
+}
 
+int getArgSpace(){
+	return argOffset++;
+}
+
+void resetLocalSpace(){
+	localOffset=1;
+	argOffset=-1;
+}
 int main(int argc, char* argv[])
 {
 	
-	reg = 0;
+	tempreg = 0;
 	if(argc > 2)
 	{
 		FILE *fp = fopen(argv[1], "r");

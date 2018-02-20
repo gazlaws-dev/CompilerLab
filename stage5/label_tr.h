@@ -6,6 +6,6 @@ typedef struct labelItem {
 } labelItem;
 
 
-struct labelItem* hashArray[SIZE];
+struct labelItem* hashArray[SIZE], *funcArray[SIZE];
 void incLine();
 void fstrcpy(FILE *fp, char* s);

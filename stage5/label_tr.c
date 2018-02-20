@@ -22,6 +22,28 @@ int search(int label) {
    return -1;        
 }
 
+
+int fsearch(int label) {
+   //get the hash 
+   int hashIndex = hashCode(label);  
+   
+   //move in array until an empty 
+   while(funcArray[hashIndex] != NULL) {
+	
+      if(funcArray[hashIndex]->label == label)
+         return (funcArray[hashIndex])->address; 
+			
+      //go to next cell
+      ++hashIndex;
+		
+      //wrap around the table
+      hashIndex %= SIZE;
+   }        
+	
+   return -1;        
+}
+
+
 void insert(int label,int address) {
 
    labelItem *item = (labelItem*) malloc(sizeof(labelItem));
@@ -42,6 +64,28 @@ void insert(int label,int address) {
 	
    hashArray[hashIndex] = item;
 }
+
+void finsert(int label,int address) {
+
+   labelItem *item = (labelItem*) malloc(sizeof(labelItem));
+   item->address = address;  
+   item->label = label;
+
+   //get the hash 
+   int hashIndex = hashCode(label);
+
+   //move in array until an empty or deleted cell
+   while(funcArray[hashIndex] != NULL && funcArray[hashIndex]->label != -1) {
+      //go to next cell
+      ++hashIndex;
+		
+      //wrap around the table
+		hashIndex %= SIZE;
+   }
+	
+   funcArray[hashIndex] = item;
+}
+
 
 void display() {
    int i = 0;

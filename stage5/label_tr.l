@@ -16,21 +16,46 @@
 
 %%
 
-(.)*:[\n] {
+L(.)*:[\n] {
 			if(pass==1){
 				char t;
 				t = yytext[1];
 				insert(t-'0',currLine);
 			}
 			}
+F(.)*:[\n] {
+			if(pass==1){
+				char t;
+				t = yytext[1];
+				finsert(t-'0',currLine);
+			}
+		}
+			
+(MAIN:[\n]) {
+			if(pass==1){
+					finsert(0,currLine);
+			}
+	}
 
+(MAIN[\n]) {
+	
 
-(J(.)*[\n]) {	//printf("In a Jump %d\n",pass);
+		if(pass==2){
+			fprintf(fout,"%d\n",fsearch(0));
+			incLine();
+		} else if(pass == 1){
+			fstrcpy(ftemp, yytext);
+			incLine();
+		} 
+		
+}
+
+(J(.)*[\n]) {	
 				
 				if(pass == 1){
 					fstrcpy(ftemp, yytext);
 				} else {
-					int i,j, labelNo;				
+					int i, labelNo;				
 					char tempS[50];
 					//saves string upto 'L' eg "JMP ", "JZ R4, "
 					for(i=0; i<yyleng && yytext[i]!='L' ; i++){
@@ -43,6 +68,29 @@
 				incLine();
 			}
 
+(C(.)*F(.)*[\n]) {
+				
+				if(pass == 1){
+					fstrcpy(ftemp, yytext);
+				} else {
+					int i,j, labelNo;				
+					char tempS[50];
+					//i will have the number after 'F'
+					for(i=0; i<yyleng && yytext[i]!='F' ; i++){
+					}
+					i++;
+					j=0;
+					while(yytext[i]!='\n'){
+						tempS[j]=yytext[i];
+						i++;
+						j++;
+					}
+					tempS[j]='\0';
+					labelNo = atoi(tempS);
+					fprintf(fout,"CALL %d\n",fsearch(labelNo));
+				}
+				incLine();
+			}
 
 .*[\n] {	
 			if(pass == 1){

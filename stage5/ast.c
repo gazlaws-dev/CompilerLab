@@ -44,24 +44,27 @@ struct tnode * createFuncDefNode(int retType, char *funcName, struct tnode* body
 	struct globalEntry* gentry = gLookup(funcName);
 	struct localTable* lentry = localTableLookup(funcName);
 	struct tableEntry* entry = (struct tableEntry*) malloc(sizeof(struct tableEntry));
-	entry->globalEntry= gentry;
-	entry->localTable=lentry;
-	entry->isLoc=2;
+	
+		entry->globalEntry= gentry;
+		entry->localTable=lentry;
+		entry->isLoc=2;
 	
 	
-	if(gentry->type==retType==body->type){
-	
+	if(retType==body->type){
+		printf("\n\nHere\n\n");
 		return createTree(NULL,retType, funcName, tFUNC, entry ,NULL, body ,NULL);
 	}
 
 }
 
 
-struct tnode * createFuncCallNode(char * funcName, struct tnode * argList){
+struct tnode * createFuncCallNode(char * funcName, struct tnode * arglist){
 	
 	struct tableEntry * entry = (struct tableEntry *) malloc (sizeof(struct tableEntry));
 	struct globalEntry* gtemp = gLookup(funcName);
-	struct tnode* paramlist, *arglist;
+	struct tnode* paramlist,*arg;
+	
+	arg = arglist;
 	
 	if(gtemp == NULL){
 					yyerror("Yacc : Undeclared function");
@@ -81,8 +84,7 @@ struct tnode * createFuncCallNode(char * funcName, struct tnode * argList){
 	
 	entry->isLoc=0;
 	entry->globalEntry=gtemp;
-	
-	return createTree(NULL,gtemp->type, funcName, tFCALL, entry ,NULL, argList ,NULL);
+	return createTree(NULL,gtemp->type, funcName, tFCALL, entry ,NULL, arg ,NULL);
 	
 }
 
