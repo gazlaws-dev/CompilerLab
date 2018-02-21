@@ -21,6 +21,7 @@ struct globalEntry{
 struct localEntry{
 	char *name; //name of the variable
 	int type; //type of the variable:(Integer / String)
+	int nodetype; //just for pointer/var
 	int binding; //local binding of the variable
 	struct localEntry *next;//points to the next Local Symbol Table entry
 }; 
@@ -61,16 +62,18 @@ struct localTable* localTableCreate(char *name){
 
 
 
-void localEntryCreate(char *funcName, char *varName, int type, int binding){
+void localEntryCreate(char *funcName, char *varName, int type,int nodetype, int binding){
 
 	struct localTable * current = localTableLookup(funcName);  
-	//create if it's there in global, in the same order??
 	
+	//check if it already exists in lookup TODO
     if (current != NULL)
     {
         struct localEntry * currParam =  (struct localEntry*) malloc(sizeof(struct localEntry));
         currParam->name = strdup(varName);
+        if(nodetype==tPVAR) type+=10;
         currParam->type = type;
+        currParam->nodetype = nodetype;
         currParam->binding=binding;
         currParam->next = current->localEntry;
         current->localEntry =currParam;
@@ -88,16 +91,20 @@ int paramCheck(char * funcName){
 	
 	
 	while(gParam!=NULL && lParam!=NULL){
-		if (gParam->type==lParam->type && (strcmp(gParam->name,lParam->name)==0)){
+		if ((strcmp(gParam->name,lParam->name)==0) &&(gParam->type==lParam->type)){
             gParam=gParam->middle;
             lParam=lParam->next;
         } else {
+        showST();
         	yyerror("Parameter name/type mismatch");
         }
 	}
 	
-	if((gParam!=NULL && lParam==NULL) || (gParam==NULL && lParam!=NULL)){
-		yyerror("Parameter number mismatch\n");
+	if((gParam!=NULL && lParam==NULL)){
+		yyerror("Parameter number mismatch, too many in gparam\n");
+		}
+	if(gParam==NULL && lParam!=NULL){
+		yyerror("Parameter number mismatch, too many in lparam\n");
 	}
 
 }
@@ -154,6 +161,10 @@ struct tableEntry * lookup(char * name){
 		entryForVar->isLoc =0;
 		entryForVar->globalEntry = glo;
 	}
+	
+	if(loc==NULL && glo==NULL)
+		return NULL;
+	
 	return entryForVar;
 
 }
@@ -164,35 +175,30 @@ void gInstall(char *name, int type,int nodetype, int size0,int size1, int bindin
 	if(gLookup(name) == NULL){
 					struct globalEntry* symEntry = (struct globalEntry*) malloc(sizeof(struct globalEntry));
 					symEntry->name = strdup(name);
-					symEntry->type = type; 	//str or int
+					symEntry->type = type; 	//str/int
 					symEntry->nodetype = nodetype;
 					symEntry->size[0]=size0;
 					symEntry->size[1]=size1;
 					symEntry->binding = binding;
 					symEntry->next = symtable;
+					
 					symEntry->paramlist = paramlist;
+					while(paramlist){
+						if(paramlist->nodetype==tPVAR){
+							paramlist->type+=10;
+						}
+						paramlist=paramlist->middle;
+					}
 					symEntry->flabel = flabel;
 					symtable = symEntry;
 					return;
-					} else {
-						yyerror("Variable already declared\n");
-						return;
-					}
+	} else {
+		yyerror("Variable already declared\n");
+		return;
+	}
 	 
 }
 
-void gUpdate(char *name, int type, struct tnode *paramlist, struct tnode *lblock, struct tnode *body){
-
-	struct globalEntry * current = gLookup(name);  
-    if (current != NULL)
-    {
-        current->type = type;
-        current->paramlist =paramlist;
-    }
-    return NULL;
-	
-
-}
 
 void gAssignTypeDecl(struct tnode *typeNode, struct tnode *varlist){
 
@@ -200,8 +206,7 @@ void gAssignTypeDecl(struct tnode *typeNode, struct tnode *varlist){
 	
 	while(varlist!=NULL){
 		t = gLookup(varlist->name);
-		
-		switch(t->nodetype){	//var, pvar, arr
+		switch(t->nodetype){	//var, pvar, arr,tfunc
 			case tPVAR: t->type = typeNode->type + 10;		///MAGIC NUMBER DON'T REARRANGE HEADER
 									//str, int
 						break;
@@ -215,10 +220,9 @@ void gAssignTypeDecl(struct tnode *typeNode, struct tnode *varlist){
 
 void addIdListToLocal(struct  tnode * typeNode, struct  tnode * idList){
 //for each id, make and localEntry in localTable for "currFunc"
-
 	struct localTable * currTable = localTableLookup(currFunc);
 	struct localEntry * lookupEntry = localEntryLookup(currFunc,idList->name);
-	
+	int pType=typeNode->type;
 	if(lookupEntry!=NULL){
 			yyerror("Variable name already used\n");
 		}
@@ -229,7 +233,9 @@ void addIdListToLocal(struct  tnode * typeNode, struct  tnode * idList){
 		if(lookupEntry!=NULL){
 			yyerror("Variable name already used\n");
 		}
-		localEntryCreate(currFunc, idList->name, typeNode->type,getLocalSpace());
+		if(idList->nodetype==tPVAR) {pType=pType+10;}
+		localEntryCreate(currFunc, idList->name, pType, idList->nodetype ,getLocalSpace());
+
 		idList=idList->middle;
 	}
 	return;
@@ -252,7 +258,7 @@ void showST(){
         if((current->nodetype)==38){
         	struct tnode* pl = (current->paramlist);
 			while(pl!=NULL){
-				printf("\tPARAMLIST: %s, %s\n",pl->name, typeToString(pl->type));
+				printf("\tPARAMLIST: %s, %s,%d\n",pl->name, typeToString(pl->type),pl->nodetype);
 				pl=pl->middle;
 			}
 		}
@@ -266,7 +272,7 @@ void showST(){
         printf("Name:%9.9s\n", currLocal->funcName);	//params in st's names
         	
 			while(lv!=NULL){
-				printf("\tLocal vars: %s, %s,%d\n ",lv->name, typeToString(lv->type),lv->binding);
+				printf("\tLocal vars: %s, %s,%d,%d\n ",lv->name, typeToString(lv->type),lv->nodetype,lv->binding);
 				lv=lv->next;
 			}
         currLocal = currLocal->next;

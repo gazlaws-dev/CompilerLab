@@ -57,13 +57,6 @@ break {
 continue {
 	return CONTINUE;
 }
-repeat {
-	return REPEAT;
-}
-
-until {
-	return UNTIL;
-}
 
 decl {
 	return DECL;	
@@ -103,7 +96,7 @@ main {
 "*"	return MUL;
 "/"	return DIV;
 
-[a-zA-Z]+[a-zA-Z0-9]* {//printf("%s lexeme\n",yytext);
+[a-zA-Z]+[a-zA-Z0-9]* {
 		char * temp = strdup(yytext);
 		yylval = createVarNode(temp);
 		return ID;}

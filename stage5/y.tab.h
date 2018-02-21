@@ -60,26 +60,24 @@ extern int yydebug;
     ENDWHILE = 270,
     BREAK = 271,
     CONTINUE = 272,
-    REPEAT = 273,
-    UNTIL = 274,
-    DECL = 275,
-    ENDDECL = 276,
-    INT = 277,
-    STR = 278,
-    LIT = 279,
-    BRKP = 280,
-    RETURN = 281,
-    MAIN = 282,
-    LT = 283,
-    GT = 284,
-    LE = 285,
-    GE = 286,
-    EQ = 287,
-    NE = 288,
-    ADD = 289,
-    SUB = 290,
-    MUL = 291,
-    DIV = 292
+    DECL = 273,
+    ENDDECL = 274,
+    INT = 275,
+    STR = 276,
+    LIT = 277,
+    BRKP = 278,
+    RETURN = 279,
+    MAIN = 280,
+    LT = 281,
+    GT = 282,
+    LE = 283,
+    GE = 284,
+    EQ = 285,
+    NE = 286,
+    ADD = 287,
+    SUB = 288,
+    MUL = 289,
+    DIV = 290
   };
 #endif
 /* Tokens.  */
@@ -98,26 +96,24 @@ extern int yydebug;
 #define ENDWHILE 270
 #define BREAK 271
 #define CONTINUE 272
-#define REPEAT 273
-#define UNTIL 274
-#define DECL 275
-#define ENDDECL 276
-#define INT 277
-#define STR 278
-#define LIT 279
-#define BRKP 280
-#define RETURN 281
-#define MAIN 282
-#define LT 283
-#define GT 284
-#define LE 285
-#define GE 286
-#define EQ 287
-#define NE 288
-#define ADD 289
-#define SUB 290
-#define MUL 291
-#define DIV 292
+#define DECL 273
+#define ENDDECL 274
+#define INT 275
+#define STR 276
+#define LIT 277
+#define BRKP 278
+#define RETURN 279
+#define MAIN 280
+#define LT 281
+#define GT 282
+#define LE 283
+#define GE 284
+#define EQ 285
+#define NE 286
+#define ADD 287
+#define SUB 288
+#define MUL 289
+#define DIV 290
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

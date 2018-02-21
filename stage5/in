@@ -1,31 +1,73 @@
 decl
-	int result,factorial(int n);
+	int x,y,z,arr[5],swap(int *p,int *q),bubble(int n),printArr(int n);
 enddecl
 
-int factorial(int n){
+
+int swap(int *p, int *q){
 	decl
-		int f;
+		int temp;
 	enddecl
 	begin
-		if(n<2) then
-			f=1;
-		else
-			f=n*factorial(n-1);
-			breakpoint;
-		endif;
-		return f;
-    end
+		temp = *p;
+		*p = *q;
+		*q = temp;
+		return 0;
+	end
 }
 
+int printArr(int n)
+{
+	decl
+		int i;
+	enddecl
+	begin
+		i=0;
+		while( i < n ) do
+			write(arr[i]);
+			i=i+1;
+		endwhile;
+		return 0;
+	end
+}
+// A function to implement bubble sort
+int bubble(int n)
+{
+	decl
+		int i, j,p,q,a;
+	enddecl
+	begin
+		i=0;
+		while(i<n) do
+			// Last i elements are already in place
+			j=0;
+			while(j < (n-i-1)) do
+				if (arr[j] > arr[j+1]) then
+					a=swap(&arr[j], &arr[j+1]);
+				endif;
+				j=j+1;
+			endwhile;
+		i=i+1;
+	   endwhile;
+	   
+	return 0;
+   end
+}
 
 int main(){
 	decl
-		int a;
+		int a,n;
 	enddecl
 	begin
-		read(a);
-		result = factorial(a);
-		write(result);
+		n=5;
+		arr[0]=4;
+		arr[1]=0-3;
+		arr[2]=10;
+		arr[3]=3;
+		arr[4]=0;
+		a=printArr(n);
+		a=bubble(n);
+		write("After sorting");
+		a=printArr(n);
 		return 0;
 	end
 }

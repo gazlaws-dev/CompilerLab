@@ -49,56 +49,98 @@ int getLocReg(struct tnode* t,FILE *fp){
 	int loc,reg;
 
 	if(t->entry->isLoc==1){
-		reg=getReg();
-		loc = t->entry->localEntry->binding;	//1,2 3
-		fprintf(fp,"MOV R%d, BP\n",reg);		//4xxx+1,2,3 (or -3,-4,-5)
-		fprintf(fp,"ADD R%d, %d\n",reg,loc);
-		//need to use loc+BP
-			return reg;
+		switch(t->nodetype){//can't be arrays
+			case tREF:
+			case tPVAR:
+			case tVAR:{ 
+					reg=getReg();
+					loc = t->entry->localEntry->binding;	//1,2 3
+					fprintf(fp,"MOV R%d, BP\n",reg);		//4xxx+1,2,3 (or -3,-4,-5)
+					fprintf(fp,"ADD R%d, %d\n",reg,loc);
+					//need to use loc+BP
+					return reg;
+				}
+			}
+		
 	} else {
-	loc = t->entry->globalEntry->binding;
+		loc = t->entry->globalEntry->binding;
 		switch(t->nodetype){
+			case tREF://could be ref to array &arr[i]
+					if(t->middle!=NULL){
+						int reg = getReg();
+						int offsetReg = codeGen(t->middle,fp);
+						fprintf(fp,"ADD R%d, %d\n",offsetReg,loc);
+						return offsetReg;
+					}
+			case tPVAR:
 			case tVAR:{ 
 					int reg = getReg();
 					fprintf(fp,"MOV R%d, %d\n",reg,loc);
-					return reg;
-			}
-			default: fprintf(fp,"getLoc failed %d\n",t->nodetype);	
+					return reg;}
+			case tARR:{
+					//this will get a new register anyway
+					int offsetReg = codeGen(t->middle,fp);
+					fprintf(fp,"ADD R%d, %d\n",offsetReg,loc);
+					return offsetReg;
+					}
+		
+			case tDARR:{
+						int offsetReg = codeGen(t->middle,fp);
+						int  offsetCol = codeGen(t->right,fp);
+						//mul size[0] with row, add col
+						fprintf(fp,"MUL R%d, %d\n",offsetReg, t->entry->globalEntry->size[0]);
+						//now add offsetCol to offsetReg
+						fprintf(fp,"ADD R%d, R%d\n", offsetReg, offsetCol);
+						fprintf(fp,"ADD R%d, %d\n",offsetReg,loc);
+						return offsetReg;
+						}
+			default: printf("getLoc failed %d\n",t->nodetype);	
 		}
+
 	}
 
 }
 
 int codeGen(struct tnode* t,FILE *fp){
 	int loc, reg,p,q;
-	if(t==NULL) return -1;
+	//for return;
+	if(t==NULL) {return -1;}
+	
 	switch((t->nodetype)){
 		case tFCALL:{
-				struct tnode* arg = t->middle;
+				struct tnode* arg = t->arglist;
 				
 				saveReg(fp);
 				freeAllReg();
 				while(arg!=NULL){
 					//arg n pushed first
+					//not for whole arrays
 					p = codeGen(arg,fp);
 					fprintf(fp,"PUSH R%d\n",p);
-					arg=arg->middle;
+					arg=arg->arglist;
 					}
 				//one for return value	
-				fprintf(fp,"PUSH R%d\n",p);
+				fprintf(fp,"PUSH R0\n");
 				
 				fprintf(fp,"CALL F%d\n",t->entry->globalEntry->flabel);
 				//SP points to Ret value
 				freeAllReg();
-				reg=tempCount+1;	//i know this won't be restored//atleast R1 here
+				
+				reg=tempCount;	//i know this won't be restored
+				
+				//atleast R1 here
+				//plus one so I can use R0 for poppping arguments out
+				if(tempCount==0){
+					reg=tempCount+1;
+				}
 				fprintf(fp,"POP R%d\n",reg);
 				
 				
 				//pop those arguments
-				arg = t->middle;
+				arg = t->arglist;
 				while(arg!=NULL){
 					fprintf(fp,"POP R0\n");
-					arg=arg->middle;
+					arg=arg->arglist;
 				}
 				restoreReg(fp);	
 				
@@ -111,16 +153,13 @@ int codeGen(struct tnode* t,FILE *fp){
 				int label_1 = t->entry->globalEntry->flabel;
 				int i=1,n=1;
 				struct localEntry* le = t->entry->localTable->localEntry;
-				struct globalEntry* gEntry = t->entry->globalEntry;	//to get argument list
-				struct tnode* paramlist = gEntry->paramlist;
 				
 				if(strcmp(t->entry->localTable->funcName,"main")==0){
-					fprintf(fp,"MAIN:\n");	
+					fprintf(fp,"MAIN:\nMOV SP, %d\nMOV BP, %d\n",staticSize,staticSize);	
 				} else
 					{fprintf(fp,"F%d:\n", label_1);
 					}				
 				fprintf(fp,"PUSH BP\nMOV BP,SP\n");
-				
 				while((le!=NULL)&&(le->binding>0)){
 					//only push those NOT arg, ie, not in paramlist
 					fprintf(fp,"PUSH R0\n");
@@ -130,7 +169,6 @@ int codeGen(struct tnode* t,FILE *fp){
 				t->middle->entry=t->entry;
 				//body
 				codeGen(t->middle,fp);
-				
 				return -1;
 				}
 		case tBODY:{
@@ -140,7 +178,6 @@ int codeGen(struct tnode* t,FILE *fp){
 				
 				//ret needs to know lentry
 				t->right->entry=t->entry;
-				
 				codeGen(t->right,fp);
 				return -1;
 					}
@@ -177,9 +214,24 @@ int codeGen(struct tnode* t,FILE *fp){
 				fprintf(fp,"MOV R%d, %d\n", reg, t->val);
 				return reg;
 		case tVAR://gets the value in a reg
+		case tPVAR:
+		case tARR:
+		case tDARR:
 				reg = getReg();	//R2
 				loc = getLocReg(t,fp);	//R3 = 4098
 				fprintf(fp,"MOV R%d, [R%d]\n", reg, loc);	//MOV R2, [4098]
+				return reg;
+		case tREF://p=&q;
+				//reg has the location in it
+				loc = getLocReg(t,fp);
+				return loc;
+		case tDEREF://q=*p;
+					//*p=q+1;
+				//value in p is the address who's value we need
+				reg=getReg();
+				t->nodetype=tPVAR;
+				loc = codeGen(t,fp);
+				fprintf(fp,"MOV R%d, [R%d]\n",reg,loc);
 				return reg;
 		case tBRKP: 
 				fprintf(fp,"BRKP\n");
@@ -198,10 +250,13 @@ int codeGen(struct tnode* t,FILE *fp){
 				codeGen(t->right,fp);
 				freeAllReg();
 				return -1;
-				
 		case tASSIGN:
 				reg = codeGen(t->right,fp);
-				loc = getLocReg(t->left,fp);
+				if(t->left->nodetype==tPVAR && t->left->type!=pIntType && t->left->type!=pStringType){	//*p=... TODO make a isPointer variable //0,1..n
+					loc = codeGen(t->left,fp);	//now address of q is in loc (in a register)
+				}else {
+					loc = getLocReg(t->left,fp);
+				}
 				fprintf(fp,"MOV [R%d], R%d\n", loc, reg);
 				return -1;
 		case tIF:{
@@ -224,23 +279,23 @@ int codeGen(struct tnode* t,FILE *fp){
 		case tWHILE:{
 			int label_1 = getLabel();
 			int label_2 = getLabel();
-			fprintf(fp,"L%d:\n", label_1); // Place the first label here.
+			fprintf (fp, "L%d:\n", label_1); // Place the first label here.
 			p=codeGen(t->left,fp);
-			fprintf(fp,"JZ R%d, L%d\n", p, label_2);//if zero, jump to label_2 // loop exit
+			fprintf (fp, "JZ R%d, L%d\n", p, label_2);//if zero, jump to label_2 // loop exit
 			push(&breakstack,label_2);
 			push(&contstack,label_1);
 			codeGen(t->right,fp);
-			printf( "JMP L%d\n", label_1); // return to the beginning of the loop.
-			printf( "L%d:\n", label_2); 	// Place the second label here
+			fprintf(fp, "JMP L%d\n", label_1); // return to the beginning of the loop.
+			fprintf(fp, "L%d:\n", label_2); 	// Place the second label here
 			return -1;
 			}
 		case tBREAK:{
-			printf( "JMP L%d\n", pop(&breakstack));
+			fprintf(fp,"JMP L%d\n", pop(&breakstack));
 			pop(&contstack);
 			return -1;
 		}
 		case tCONTINUE:{
-			printf( "JMP L%d\n", pop(&contstack));
+			fprintf(fp,"JMP L%d\n", pop(&contstack));
 			return -1;
 		}
 		default:
@@ -254,7 +309,6 @@ int codeGen(struct tnode* t,FILE *fp){
 					fprintf(fp,"SUB R%d, R%d\n",reg,loc);
 					break;
 				case tMUL:
-					printf("MUL R%d, R%d\n",reg,loc);
 					fprintf(fp,"MUL R%d, R%d\n",reg,loc);
 					break;
 				case tDIV:

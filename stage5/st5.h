@@ -59,7 +59,7 @@ struct globalEntry * gLookup(char * name);
 
 
 struct globalEntry * symtable = NULL;
-struct tableEntry * allLST = NULL;
+struct localTable * allLST = NULL;
 char *currFunc;
 
 
@@ -75,6 +75,6 @@ typedef struct tnode {
 	char* name;	//name of a variable for ID nodes  
 	int nodetype;  // information about non-leaf nodes - read/write/connector/+/* etc. 
 	struct tableEntry *entry; //pointerto entry for global variables and functions 
-	struct tnode *left,*middle,*right;	//left and right branches   
+	struct tnode *left,*middle,*right,*arglist;	//left and right branches   
 }tnode;
 
