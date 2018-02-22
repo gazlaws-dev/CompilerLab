@@ -41,11 +41,9 @@ struct tnode * createFuncBodyNode(struct tnode* slist, struct tnode* ret){
 }
 
 struct tnode * createFuncDefNode(int retType, char *funcName, struct tnode* body){
-	
 	struct globalEntry* gentry = gLookup(funcName);
 	struct localTable* lentry = localTableLookup(funcName);
 	struct tableEntry* entry = (struct tableEntry*) malloc(sizeof(struct tableEntry));
-	
 		entry->globalEntry= gentry;
 		entry->localTable=lentry;
 		entry->isLoc=2;
@@ -99,7 +97,7 @@ struct tnode * createFuncCallNode(char * funcName, struct tnode * arglist){
 
 //int/str *p,*c
 //int/str q, a
-
+//TODO learn all this perfectly//refactor to be better
 //p=&q
 //p=c
 //pvar = deref + num
@@ -191,21 +189,6 @@ struct tnode* createWhileNode(struct tnode *l, struct tnode *r){
 		}
 }
 
-struct tnode* createDoWhileNode(struct tnode *l, struct tnode *r){
-	if((r->type) == boolType){
-		return createTree(NULL,NULL, NULL,tDOWHILE,NULL, l, NULL,r,NULL);
-	}else{
-		yyerror("Type mismatch - guard of do while must be a conditional\n");
-		}
-}
-
-struct tnode* createRepeatNode(struct tnode *l, struct tnode *r){
-	if((r->type) == boolType){
-		return createTree(NULL,NULL, NULL,tREPEAT,NULL, l, NULL,r,NULL);
-	}else{
-		yyerror("Type mismatch - guard of repeat must be a conditional\n");
-		}
-}
 struct tnode* createBreakNode(){
 	return createTree(NULL, NULL ,NULL, tBREAK,NULL, NULL, NULL, NULL,NULL);
 }

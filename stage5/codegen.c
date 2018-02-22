@@ -124,15 +124,12 @@ int codeGen(struct tnode* t,FILE *fp){
 				
 				fprintf(fp,"CALL F%d\n",t->entry->globalEntry->flabel);
 				//SP points to Ret value
-				freeAllReg();
+				//freeAllReg();// no bc it could be a func call within another func call
 				
-				reg=tempCount;	//i know this won't be restored
+				reg=tempCount+1;	//i know this won't be restored
 				
 				//atleast R1 here
 				//plus one so I can use R0 for poppping arguments out
-				if(tempCount==0){
-					reg=tempCount+1;
-				}
 				fprintf(fp,"POP R%d\n",reg);
 				
 				
@@ -142,9 +139,9 @@ int codeGen(struct tnode* t,FILE *fp){
 					fprintf(fp,"POP R0\n");
 					arg=arg->arglist;
 				}
-				restoreReg(fp);	
-				
-							
+				restoreReg(fp);
+				//TODO explain why
+				tempreg=reg+1;
 				return reg;	//return value is here
 				
 				}

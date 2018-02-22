@@ -1,293 +1,72 @@
-0
-MAIN
-0
-0
-0
-0
-1
-0
-PUSH BP
-MOV BP,SP
-PUSH R0
-MOV R3, BP
-ADD R3, -3
-MOV R2, [R3]
-MOV R1, [R2]
-MOV R4, BP
-ADD R4, 1
-MOV [R4], R1
-MOV R2, BP
-ADD R2, -4
-MOV R1, [R2]
-MOV R0, [R1]
-MOV R4, BP
-ADD R4, -3
-MOV R3, [R4]
-MOV [R3], R0
-MOV R1, BP
-ADD R1, 1
-MOV R0, [R1]
-MOV R3, BP
-ADD R3, -4
-MOV R2, [R3]
-MOV [R2], R0
-MOV R1, 0
-POP R2
-MOV R0, BP
-SUB R0, 2
-MOV [R0], R1
-POP BP
-RET
-PUSH BP
-MOV BP,SP
-PUSH R0
-MOV R1, 0
-MOV R2, BP
-ADD R2, 1
-MOV [R2], R1
-MOV R1, BP
-ADD R1, 1
-MOV R0, [R1]
-MOV R3, BP
-ADD R3, -3
-MOV R2, [R3]
-LT R0, R2
-JZ R0, L1
-MOV R5, BP
-ADD R5, 1
-MOV R4, [R5]
-ADD R4, 4099
-MOV R3, [R4]
-PUSH R0
-MOV R0,R3
-MOV R6, "Write"
-PUSH R6
-MOV R6, -2
-PUSH R6
-PUSH R0
-PUSH R0
-PUSH R0
-CALL 0
-POP R6
-POP R6
-POP R6
-POP R6
-POP R6
-POP R0
-MOV R1, BP
-ADD R1, 1
-MOV R0, [R1]
-MOV R2, 1
-ADD R0, R2
-MOV R2, BP
-ADD R2, 1
-MOV [R2], R0
-JMP L0
-MOV R1, 0
-POP R2
-MOV R0, BP
-SUB R0, 2
-MOV [R0], R1
-POP BP
-RET
-PUSH BP
-MOV BP,SP
-PUSH R0
-PUSH R0
-PUSH R0
-PUSH R0
-PUSH R0
-MOV R1, 0
-MOV R2, BP
-ADD R2, 5
-MOV [R2], R1
-MOV R1, BP
-ADD R1, 5
-MOV R0, [R1]
-MOV R3, BP
-ADD R3, -3
-MOV R2, [R3]
-LT R0, R2
-JZ R0, L3
-MOV R3, 0
-MOV R4, BP
-ADD R4, 4
-MOV [R4], R3
-MOV R1, BP
-ADD R1, 4
-MOV R0, [R1]
-MOV R3, BP
-ADD R3, -3
-MOV R2, [R3]
-MOV R5, BP
-ADD R5, 5
-MOV R4, [R5]
-SUB R2, R4
-MOV R5, 1
-SUB R2, R5
-LT R0, R2
-JZ R0, L5
-MOV R6, BP
-ADD R6, 4
-MOV R5, [R6]
-ADD R5, 4099
-MOV R4, [R5]
-MOV R9, BP
-ADD R9, 4
-MOV R8, [R9]
-MOV R10, 1
-ADD R8, R10
-ADD R8, 4099
-MOV R7, [R8]
-GT R4, R7
-JZ R4, L6
-PUSH R0
-PUSH R1
-PUSH R2
-PUSH R3
-PUSH R4
-PUSH R5
-PUSH R6
-PUSH R7
-PUSH R8
-MOV R2, BP
-ADD R2, 4
-MOV R1, [R2]
-MOV R3, 1
-ADD R1, R3
-ADD R1, 4099
-PUSH R1
-MOV R5, BP
-ADD R5, 4
-MOV R4, [R5]
-ADD R4, 4099
-PUSH R4
-PUSH R0
-CALL F1
-POP R9
-POP R0
-POP R0
-POP R8
-POP R7
-POP R6
-POP R5
-POP R4
-POP R3
-POP R2
-POP R1
-POP R0
-MOV R9, BP
-ADD R9, 1
-MOV [R9], R9
-MOV R1, BP
-ADD R1, 4
-MOV R0, [R1]
-MOV R2, 1
-ADD R0, R2
-MOV R2, BP
-ADD R2, 4
-MOV [R2], R0
-JMP L4
-MOV R1, BP
-ADD R1, 5
-MOV R0, [R1]
-MOV R2, 1
-ADD R0, R2
-MOV R2, BP
-ADD R2, 5
-MOV [R2], R0
-JMP L2
-MOV R1, 0
-POP R2
-POP R2
-POP R2
-POP R2
-POP R2
-MOV R0, BP
-SUB R0, 2
-MOV [R0], R1
-POP BP
-RET
-MOV SP, 4104
-MOV BP, 4104
-PUSH BP
-MOV BP,SP
-PUSH R0
-PUSH R0
-MOV R1, 5
-MOV R2, BP
-ADD R2, 1
-MOV [R2], R1
-MOV R0, 4
-MOV R1, 0
-ADD R1, 4099
-MOV [R1], R0
-MOV R0, 0
-MOV R1, 3
-SUB R0, R1
-MOV R1, 1
-ADD R1, 4099
-MOV [R1], R0
-MOV R0, 10
-MOV R1, 2
-ADD R1, 4099
-MOV [R1], R0
-MOV R0, 3
-MOV R1, 3
-ADD R1, 4099
-MOV [R1], R0
-MOV R0, 0
-MOV R1, 4
-ADD R1, 4099
-MOV [R1], R0
-MOV R1, BP
-ADD R1, 1
-MOV R0, [R1]
-PUSH R0
-PUSH R0
-CALL F3
-POP R1
-POP R0
-MOV R0, BP
-ADD R0, 2
-MOV [R0], R1
-MOV R1, BP
-ADD R1, 1
-MOV R0, [R1]
-PUSH R0
-PUSH R0
-CALL F2
-POP R1
-POP R0
-MOV R0, BP
-ADD R0, 2
-MOV [R0], R1
-MOV R0, "After sorting"
-PUSH R0
-MOV R0,R0
-MOV R1, "Write"
-PUSH R1
-MOV R1, -2
-PUSH R1
-PUSH R0
-PUSH R0
-PUSH R0
-CALL 0
-POP R1
-POP R1
-POP R1
-POP R1
-POP R1
-POP R0
-MOV R1, BP
-ADD R1, 1
-MOV R0, [R1]
-PUSH R0
-PUSH R0
-CALL F3
-POP R1
-POP R0
-MOV R0, BP
-ADD R0, 2
-MOV [R0], R1
-INT 10
+decl
+	int x,y,z,arr[5],swap(int *p,int *q),bubble(int n),printArr(int n);
+enddecl
+
+int swap(int *p, int *q){
+	decl
+		int temp;
+	enddecl
+	begin
+		temp = *p;
+		*p = *q;
+		*q = temp;
+		return 0;
+	end
+}
+
+int printArr(int n)
+{
+	decl
+		int i;
+	enddecl
+	begin
+		i=0;
+		while( i < n ) do
+			write(arr[i]);
+			i=i+1;
+		endwhile;
+		return 0;
+	end
+}
+// A function to implement bubble sort
+int bubble(int n)
+{
+	decl
+		int i, j,p,q,a;
+	enddecl
+	begin
+		i=0;
+		while(i<n) do
+			// Last i elements are already in place
+			j=0;
+			while(j < (n-i-1)) do
+				if (arr[j] > arr[j+1]) then
+					a=swap(&arr[j], &arr[j+1]);
+				endif;
+				j=j+1;
+			endwhile;
+		i=i+1;
+	   endwhile;
+	   
+	return 0;
+   end
+}
+
+int main(){
+	decl
+		int a,n;
+	enddecl
+	begin
+		n=5;
+		arr[0]=4;
+		arr[1]=0-3;
+		arr[2]=10;
+		arr[3]=3;
+		arr[4]=0;
+		a=printArr(n);
+		a=bubble(n);
+		write("After sorting");
+		a=printArr(n);
+		return 0;
+	end
+}

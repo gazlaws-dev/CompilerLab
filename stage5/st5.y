@@ -210,12 +210,7 @@ Body	: BEG Slist Retstmt END {
 			}
 ;
 Retstmt : RETURN Expr';'{
-					struct globalEntry * gEntry= gLookup(currFunc);
-					if($2->type==gEntry->type){
-						$$=createRetNode($2);
-					} else {
-						yyerror("Return Type mismatch\n");
-					}
+						$$=createRetNode($2);//type checkdone in ast
 				}
 ;
 
@@ -584,7 +579,7 @@ Expr : Expr "+" Expr	{
 							currFunc=strdup($1->name);
 							$$ = createFuncCallNode($1->name,$3);
 							currFunc=retFunc;
-							  }
+							}
 ;
 
 ArgList: ArgList ',' Expr {	$3->arglist=$1;

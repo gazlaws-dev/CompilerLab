@@ -55,7 +55,7 @@ struct localTable* localTableCreate(char *name){
 		allLST = table;
 		return table;
 	} else {
-		yyerror("Function already declared\n");
+		yyerror("Function already declared\n");	//
 		return NULL;
 	}
 }
@@ -66,7 +66,7 @@ void localEntryCreate(char *funcName, char *varName, int type,int nodetype, int 
 
 	struct localTable * current = localTableLookup(funcName);  
 	
-	//check if it already exists in lookup TODO
+	//check if it already exists in lookup
     if (current != NULL)
     {
         struct localEntry * currParam =  (struct localEntry*) malloc(sizeof(struct localEntry));
@@ -75,8 +75,9 @@ void localEntryCreate(char *funcName, char *varName, int type,int nodetype, int 
         currParam->type = type;
         currParam->nodetype = nodetype;
         currParam->binding=binding;
-        currParam->next = current->localEntry;
-        current->localEntry =currParam;
+        
+        currParam->next = current->localEntry;	//new entry
+        current->localEntry =currParam;	//update table
     }
     return NULL;
 }
@@ -117,9 +118,10 @@ struct localEntry * localEntryLookup(char * funcName, char * varName){
     {
         if (strcmp(funcName,current->funcName)==0){
             break;
-    }
+    	}
         current = current->next;
     }
+    
     if((current != NULL)){
     	 struct localEntry * currEntry = current->localEntry;
     	 while (currEntry != NULL)
@@ -223,9 +225,7 @@ void addIdListToLocal(struct  tnode * typeNode, struct  tnode * idList){
 	struct localTable * currTable = localTableLookup(currFunc);
 	struct localEntry * lookupEntry = localEntryLookup(currFunc,idList->name);
 	int pType=typeNode->type;
-	if(lookupEntry!=NULL){
-			yyerror("Variable name already used\n");
-		}
+
 		
 	while(idList!=NULL && lookupEntry==NULL){
 		lookupEntry = localEntryLookup(currFunc, idList->name);
