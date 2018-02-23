@@ -87,8 +87,8 @@ struct tnode * createFuncCallNode(char * funcName, struct tnode * arglist){
 	
 	entry->isLoc=0;
 	entry->globalEntry=gtemp;
-		//onlt use of arglist
-	return createTree(NULL,gtemp->type, funcName, tFCALL, entry ,NULL, NULL ,NULL,arg);
+	//using middle for first arg in arglist.
+	return createTree(NULL,gtemp->type, funcName, tFCALL, entry ,NULL, arg ,NULL,NULL);
 	
 }
 

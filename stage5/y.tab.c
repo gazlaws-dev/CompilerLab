@@ -505,10 +505,10 @@ static const yytype_uint16 yyrline[] =
      168,   173,   181,   181,   183,   184,   187,   192,   196,   198,
      198,   202,   208,   212,   219,   226,   234,   237,   240,   243,
      244,   245,   246,   247,   248,   249,   252,   256,   260,   262,
-     268,   289,   312,   335,   370,   374,   378,   382,   384,   387,
-     391,   394,   397,   400,   403,   406,   409,   412,   415,   418,
-     419,   420,   445,   471,   498,   523,   546,   577,   578,   585,
-     587,   588
+     268,   289,   312,   335,   368,   372,   376,   380,   382,   385,
+     389,   392,   395,   398,   401,   404,   407,   410,   413,   416,
+     417,   418,   443,   469,   496,   521,   544,   575,   576,   583,
+     585,   586
 };
 #endif
 
@@ -1959,8 +1959,6 @@ yyreduce:
 								} else {
 									yyerror("Expected interger type as offset\n");
 								}
-								(yyvsp[-6])->middle=(yyvsp[-4]);
-								//arglist uses middle,TODO change to arglist pointer
 							
 								if((yyvsp[-1])->type==intType){
 									if(((yyvsp[-1])->nodetype==tNUM) && ( (yyvsp[-1])->val >= (yyvsp[-6])->entry->globalEntry->size[1])){
@@ -1974,143 +1972,143 @@ yyreduce:
 							}	
 			
 		}
-#line 1978 "y.tab.c" /* yacc.c:1646  */
+#line 1976 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 64:
-#line 370 "st5.y" /* yacc.c:1646  */
+#line 368 "st5.y" /* yacc.c:1646  */
     {
 							
 							(yyval) = createIfNode((yyvsp[-6]),(yyvsp[-3]),(yyvsp[-1]));
 						}
-#line 1987 "y.tab.c" /* yacc.c:1646  */
+#line 1985 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 65:
-#line 374 "st5.y" /* yacc.c:1646  */
+#line 372 "st5.y" /* yacc.c:1646  */
     {
 							(yyval) = createIfNode((yyvsp[-4]),(yyvsp[-1]),NULL);
 						}
-#line 1995 "y.tab.c" /* yacc.c:1646  */
+#line 1993 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 66:
-#line 378 "st5.y" /* yacc.c:1646  */
+#line 376 "st5.y" /* yacc.c:1646  */
     {
 							(yyval) = createWhileNode((yyvsp[-4]),(yyvsp[-1]));
 							}
-#line 2003 "y.tab.c" /* yacc.c:1646  */
+#line 2001 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 67:
-#line 382 "st5.y" /* yacc.c:1646  */
+#line 380 "st5.y" /* yacc.c:1646  */
     { (yyval)=createBreakNode();
 					}
-#line 2010 "y.tab.c" /* yacc.c:1646  */
+#line 2008 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 68:
-#line 384 "st5.y" /* yacc.c:1646  */
+#line 382 "st5.y" /* yacc.c:1646  */
     {
 					(yyval)=createContinueNode();
 					}
-#line 2018 "y.tab.c" /* yacc.c:1646  */
+#line 2016 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 69:
-#line 387 "st5.y" /* yacc.c:1646  */
+#line 385 "st5.y" /* yacc.c:1646  */
     {
 							(yyval) = createOpNode(tADD,(yyvsp[-2]),(yyvsp[0]));
 						}
-#line 2026 "y.tab.c" /* yacc.c:1646  */
+#line 2024 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 70:
-#line 391 "st5.y" /* yacc.c:1646  */
+#line 389 "st5.y" /* yacc.c:1646  */
     {
 								(yyval) = createOpNode(tSUB,(yyvsp[-2]),(yyvsp[0]));
 						}
-#line 2034 "y.tab.c" /* yacc.c:1646  */
+#line 2032 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 71:
-#line 394 "st5.y" /* yacc.c:1646  */
+#line 392 "st5.y" /* yacc.c:1646  */
     {
 								(yyval) = createOpNode(tMUL,(yyvsp[-2]),(yyvsp[0]));
 						}
-#line 2042 "y.tab.c" /* yacc.c:1646  */
+#line 2040 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 72:
-#line 397 "st5.y" /* yacc.c:1646  */
+#line 395 "st5.y" /* yacc.c:1646  */
     {
 								(yyval) = createOpNode(tDIV,(yyvsp[-2]),(yyvsp[0]));
 						}
-#line 2050 "y.tab.c" /* yacc.c:1646  */
+#line 2048 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 73:
-#line 400 "st5.y" /* yacc.c:1646  */
+#line 398 "st5.y" /* yacc.c:1646  */
     {		
 								(yyval) = createOpNode(tLT,(yyvsp[-2]),(yyvsp[0]));
 						}
-#line 2058 "y.tab.c" /* yacc.c:1646  */
+#line 2056 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 74:
-#line 403 "st5.y" /* yacc.c:1646  */
+#line 401 "st5.y" /* yacc.c:1646  */
     {	
 								(yyval) = createOpNode(tGT,(yyvsp[-2]),(yyvsp[0]));
 						}
-#line 2066 "y.tab.c" /* yacc.c:1646  */
+#line 2064 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 75:
-#line 406 "st5.y" /* yacc.c:1646  */
+#line 404 "st5.y" /* yacc.c:1646  */
     {
 								(yyval) = createOpNode(tLE,(yyvsp[-2]),(yyvsp[0]));
 						}
-#line 2074 "y.tab.c" /* yacc.c:1646  */
+#line 2072 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 76:
-#line 409 "st5.y" /* yacc.c:1646  */
+#line 407 "st5.y" /* yacc.c:1646  */
     {
 								(yyval) = createOpNode(tGE,(yyvsp[-2]),(yyvsp[0]));
 						}
-#line 2082 "y.tab.c" /* yacc.c:1646  */
+#line 2080 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 77:
-#line 412 "st5.y" /* yacc.c:1646  */
+#line 410 "st5.y" /* yacc.c:1646  */
     {
 							(yyval) = createOpNode(tEQ,(yyvsp[-2]),(yyvsp[0]));
 						}
-#line 2090 "y.tab.c" /* yacc.c:1646  */
+#line 2088 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 78:
-#line 415 "st5.y" /* yacc.c:1646  */
+#line 413 "st5.y" /* yacc.c:1646  */
     {
 							(yyval) = createOpNode(tNE,(yyvsp[-2]),(yyvsp[0]));
 						}
-#line 2098 "y.tab.c" /* yacc.c:1646  */
+#line 2096 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 79:
-#line 418 "st5.y" /* yacc.c:1646  */
+#line 416 "st5.y" /* yacc.c:1646  */
     {(yyval) = (yyvsp[-1]);}
-#line 2104 "y.tab.c" /* yacc.c:1646  */
+#line 2102 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 80:
-#line 419 "st5.y" /* yacc.c:1646  */
+#line 417 "st5.y" /* yacc.c:1646  */
     {(yyval) = (yyvsp[0]);}
-#line 2110 "y.tab.c" /* yacc.c:1646  */
+#line 2108 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 81:
-#line 420 "st5.y" /* yacc.c:1646  */
+#line 418 "st5.y" /* yacc.c:1646  */
     {	
 							if(lookup((yyvsp[0])->name) != NULL){
 								(yyvsp[0])->entry = lookup((yyvsp[0])->name);
@@ -2136,11 +2134,11 @@ yyreduce:
 							}
 						(yyval) = (yyvsp[0]);
 						}
-#line 2140 "y.tab.c" /* yacc.c:1646  */
+#line 2138 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 82:
-#line 445 "st5.y" /* yacc.c:1646  */
+#line 443 "st5.y" /* yacc.c:1646  */
     {		
 					if(lookup((yyvsp[0])->name) != NULL){
 						(yyvsp[0])->entry = lookup((yyvsp[0])->name);
@@ -2167,11 +2165,11 @@ yyreduce:
 					}
 					(yyval) = (yyvsp[0]);
 			}
-#line 2171 "y.tab.c" /* yacc.c:1646  */
+#line 2169 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 83:
-#line 471 "st5.y" /* yacc.c:1646  */
+#line 469 "st5.y" /* yacc.c:1646  */
     {	
 				if(lookup((yyvsp[0])->name) != NULL){
 						(yyvsp[0])->entry = lookup((yyvsp[0])->name);
@@ -2199,11 +2197,11 @@ yyreduce:
 					}
 				(yyval) = (yyvsp[0]);
 			}
-#line 2203 "y.tab.c" /* yacc.c:1646  */
+#line 2201 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 84:
-#line 498 "st5.y" /* yacc.c:1646  */
+#line 496 "st5.y" /* yacc.c:1646  */
     {
 					if(lookup((yyvsp[-3])->name) != NULL){
 						(yyvsp[-3])->entry = lookup((yyvsp[-3])->name);
@@ -2229,11 +2227,11 @@ yyreduce:
 				(yyval) = (yyvsp[-3]);
 					
 	}
-#line 2233 "y.tab.c" /* yacc.c:1646  */
+#line 2231 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 85:
-#line 523 "st5.y" /* yacc.c:1646  */
+#line 521 "st5.y" /* yacc.c:1646  */
     {
 						if(lookup((yyvsp[-3])->name) != NULL){
 								(yyvsp[-3])->entry = lookup((yyvsp[-3])->name);
@@ -2257,11 +2255,11 @@ yyreduce:
 							}
 	
 	}
-#line 2261 "y.tab.c" /* yacc.c:1646  */
+#line 2259 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 86:
-#line 546 "st5.y" /* yacc.c:1646  */
+#line 544 "st5.y" /* yacc.c:1646  */
     {
 						if(lookup((yyvsp[-6])->name) != NULL){
 								(yyvsp[-6])->entry = lookup((yyvsp[-6])->name);
@@ -2292,46 +2290,46 @@ yyreduce:
 							}
 	
 	}
-#line 2296 "y.tab.c" /* yacc.c:1646  */
+#line 2294 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 87:
-#line 577 "st5.y" /* yacc.c:1646  */
+#line 575 "st5.y" /* yacc.c:1646  */
     {(yyval) = (yyvsp[0]);}
-#line 2302 "y.tab.c" /* yacc.c:1646  */
+#line 2300 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 88:
-#line 578 "st5.y" /* yacc.c:1646  */
+#line 576 "st5.y" /* yacc.c:1646  */
     {	char *retFunc = strdup(currFunc);
 							currFunc=strdup((yyvsp[-3])->name);
 							(yyval) = createFuncCallNode((yyvsp[-3])->name,(yyvsp[-1]));
 							currFunc=retFunc;
 							}
-#line 2312 "y.tab.c" /* yacc.c:1646  */
+#line 2310 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 89:
-#line 585 "st5.y" /* yacc.c:1646  */
+#line 583 "st5.y" /* yacc.c:1646  */
     {	(yyvsp[0])->arglist=(yyvsp[-2]);
 							(yyval)=(yyvsp[0]);}
-#line 2319 "y.tab.c" /* yacc.c:1646  */
+#line 2317 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 90:
-#line 587 "st5.y" /* yacc.c:1646  */
+#line 585 "st5.y" /* yacc.c:1646  */
     {(yyval)=(yyvsp[0]);}
-#line 2325 "y.tab.c" /* yacc.c:1646  */
+#line 2323 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 91:
-#line 588 "st5.y" /* yacc.c:1646  */
+#line 586 "st5.y" /* yacc.c:1646  */
     {(yyval)=NULL;}
-#line 2331 "y.tab.c" /* yacc.c:1646  */
+#line 2329 "y.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 2335 "y.tab.c" /* yacc.c:1646  */
+#line 2333 "y.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2559,7 +2557,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 593 "st5.y" /* yacc.c:1906  */
+#line 591 "st5.y" /* yacc.c:1906  */
 
 
 int getStaticSpace(int size){

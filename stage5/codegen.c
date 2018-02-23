@@ -108,7 +108,7 @@ int codeGen(struct tnode* t,FILE *fp){
 	
 	switch((t->nodetype)){
 		case tFCALL:{
-				struct tnode* arg = t->arglist;
+				struct tnode* arg = t->middle;
 				
 				saveReg(fp);
 				freeAllReg();
@@ -134,7 +134,7 @@ int codeGen(struct tnode* t,FILE *fp){
 				
 				
 				//pop those arguments
-				arg = t->arglist;
+				arg = t->middle;
 				while(arg!=NULL){
 					fprintf(fp,"POP R0\n");
 					arg=arg->arglist;

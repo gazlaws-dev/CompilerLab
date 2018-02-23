@@ -350,8 +350,6 @@ Var: ID 			{
 								} else {
 									yyerror("Expected interger type as offset\n");
 								}
-								$1->middle=$3;
-								//arglist uses middle,TODO change to arglist pointer
 							
 								if($6->type==intType){
 									if(($6->nodetype==tNUM) && ( $6->val >= $1->entry->globalEntry->size[1])){
