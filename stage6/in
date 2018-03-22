@@ -1,0 +1,26 @@
+type 
+	bst{
+	int a;
+	bst left;
+	bst right;
+	}
+endtype
+
+
+decl
+	bst head;
+enddecl
+
+int main(){
+	decl
+		int val;
+	enddecl
+	begin
+		read(val);
+		head=NULL;
+		head.left.right.left.a=val;
+		write(head.a);
+	return 0;
+	end
+}
+

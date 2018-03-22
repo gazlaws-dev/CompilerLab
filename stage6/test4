@@ -1,0 +1,59 @@
+decl
+  int gcd(int a,int b);
+  int yd;
+  int ys;
+  int yt;
+enddecl
+
+int gcd(int a,int b)
+{
+  decl
+    int q,r,temp;
+  enddecl
+
+  begin
+    if(b==0) then
+      yd = a;
+      ys = 1;
+      yt = 0;
+    else
+      q = a/b;
+      r = a%b;
+      yd = gcd(b,r);
+      temp = ys;
+      ys = yt;
+      yt = temp - (q*yt);
+    endif;
+    write("a,b");
+    write(a);
+    write(b);
+    write("...d.s.t...");
+    write(yd);
+    write(ys);
+    write(yt);
+  return yd;
+  end
+}
+
+int main()
+{
+  decl
+    int res;
+    int a,b,c;
+  enddecl
+
+  begin
+    read(a);
+    read(b);
+    res = gcd(a,b);
+    write("a,b");
+    write(a);
+    write(b);
+    write("Final:");
+    write(yd);
+    write(ys);
+    write(yt);
+
+  return 0;
+  end
+}
