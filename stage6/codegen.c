@@ -108,18 +108,17 @@ int codeGen(struct tnode* t,FILE *fp){
 				struct tnode* arg = t->middle;
 				int tempCount=0;
 				if(strcmp("init",t->name)==0){
-					
-					return initCodeGen();
+					return initCodeGen(fp);
 				} else if(strcmp("alloc",t->name)==0){
-					return allocCodeGen();	//should return a new temp variable containing address
+					return allocCodeGen(fp);	//should return a new temp variable containing address
 				} else if(strcmp("free",t->name)==0){
 					//make sure arg is a utype TODO
-					return freeCodeGen(codeGen(arg,fp));
+					return freeCodeGen(codeGen(arg,fp),fp);
 				//takes the temp variable containing free(t) -t's binding ?not in symbol table because it's run time?. t's binding to a single space (in static or stack) that holds it's address to the real space in heap)
 				}
 				
 				tempCount=tempreg;
-				saveReg(fp);	//problem is here
+				saveReg(fp);	//problem was here
 				freeAllReg();
 				while(arg!=NULL){
 					//arg n pushed first
@@ -163,7 +162,10 @@ int codeGen(struct tnode* t,FILE *fp){
 				struct localEntry* le = t->entry->localTable->localEntry;
 				
 				if(strcmp(t->entry->localTable->funcName,"main")==0){
-					fprintf(fp,"MAIN:\nMOV SP, %d\nMOV BP, %d\n",staticSize,staticSize);
+				
+					fprintf(fp,"MAIN:\n");
+					initCodeGen(fp);
+					fprintf(fp,"MOV SP, %d\nMOV BP, %d\n",staticSize,staticSize);
 					fprintf(fp,"PUSH BP\n");
 				} else
 					{fprintf(fp,"F%d:\n", label_1);
@@ -220,6 +222,42 @@ int codeGen(struct tnode* t,FILE *fp){
 				fprintf(fp,"MOV R%d, %d\n", reg, t->val);
 				return reg;
 		case tVAR://gets the value in a reg
+					//also a UTYPE
+					//only for rhs, gets the value
+					if(t->middle!=NULL){	//head.left.val
+						Typetable * type;	//bst
+						
+						if(t->entry->isLoc)
+									type=(t->entry->localEntry)->type;
+						else		type = t->entry->globalEntry->type;	//bst
+						
+						printf("t->name: %s\n",t->name);
+						printf("t->type: %s\n",t->type->name);
+						printf("t->rel type: %s\n",type->name);
+						if(type==NULL) yyerror("why is it null\n");
+						loc = getLocReg(t,fp);	//4096 holding the heap address
+						fprintf(fp,"MOV R%d, [R%d]\n",loc, loc);	//[4096] which may be 1032
+						
+						
+						while(t->middle->middle!=NULL){	//head.left.val		//left.val
+							struct Fieldlist* f = FLookup(type,t->middle->name);
+							int fieldIndex = f->fieldIndex;		//0		//3
+							fprintf(fp,"ADD R%d, %d\n",loc, fieldIndex+1);	//1032+3		//1040+0
+							fprintf(fp,"MOV R%d, [R%d]\n",loc, loc);		//[1032+3] ==would be 1040(another bst)							
+							type = f->type;				//bst
+							
+							t=t->middle;				//left.val
+						}
+
+						if(t->middle->middle==NULL){	//head.val
+							struct Fieldlist* f = FLookup(type, t->middle->name);
+							int fieldIndex;
+							fieldIndex = f->fieldIndex;
+							fprintf(fp,"ADD R%d, %d\n",loc, fieldIndex+1);	//1040+0
+							fprintf(fp,"MOV R%d, [R%d]\n",loc, loc);		//[1040+0]
+						}
+						return loc;
+					}
 		case tPVAR:
 		case tARR:
 		case tDARR:
@@ -227,7 +265,6 @@ int codeGen(struct tnode* t,FILE *fp){
 				loc = getLocReg(t,fp);	//R3 = 4098
 				fprintf(fp,"MOV R%d, [R%d]\n", reg, loc);	//MOV R2, [4098]
 				return reg;
-		case tUTYPE:	//head.left.val
 		case tREF://p=&q;
 				//reg has the location in it
 				loc = getLocReg(t,fp);
@@ -257,13 +294,46 @@ int codeGen(struct tnode* t,FILE *fp){
 				codeGen(t->right,fp);
 				freeAllReg();
 				return -1;
-		case tASSIGN:
+		case tASSIGN:	
 				reg = codeGen(t->right,fp);
 				if(t->left->nodetype==tPVAR && t->left->type!=pIntType && t->left->type!=pStringType){	//*p=... TODO make a isPointer variable //0,1..n
 					loc = codeGen(t->left,fp);	//now address of q is in loc (in a register)
-				}else {
+				}else if(t->left->middle!=NULL){	//head.left.val
+						t=t->left;
+						Typetable * type;
+						
+						if(t->entry->isLoc)
+									type=(t->entry->localEntry)->type;
+						else		type = t->entry->globalEntry->type;	//bst
+						printf("t->name: %s\n",t->name);
+						printf("t->type: %s\n",t->type->name);
+						printf("t->rel type: %s\n",type->name);
+						if(type==NULL) yyerror("why is it null\n");
+						loc = getLocReg(t,fp);	//4096 holding the heap address
+						fprintf(fp,"MOV R%d, [R%d]\n",loc, loc);	//[4096] which may be 1032
+						
+						
+						while(t->middle->middle!=NULL){	//head.left.val		//left.val
+							struct Fieldlist* f = FLookup(type,t->middle->name);
+							int fieldIndex = f->fieldIndex;		//0		//3
+							fprintf(fp,"ADD R%d, %d\n",loc, fieldIndex+1);	//1032+3		//1040+0
+							fprintf(fp,"MOV R%d, [R%d]\n",loc, loc);		//[1032+3] ==would be 1040(another bst)							
+							type = f->type;				//bst
+							
+							t=t->middle;				//left.val
+						}
+
+						if(t->middle->middle==NULL){	//head.val
+							struct Fieldlist* f = FLookup(type, t->middle->name);
+							int fieldIndex;
+							fieldIndex = f->fieldIndex;
+							fprintf(fp,"ADD R%d, %d\n",loc, fieldIndex+1);	//1040+0
+						}
+					}else {
+					
 					loc = getLocReg(t->left,fp);
-				}
+					}
+					
 				fprintf(fp,"MOV [R%d], R%d\n", loc, reg);
 				return -1;
 		case tIF:{
@@ -387,14 +457,29 @@ void writeCodeGen(int reg, FILE *fp){
 }
 
 int freeCodeGen(int address, FILE *fp){
-	return -1;
+	fprintf(fp,"PUSH R%d\n", address);
+	fprintf(fp,"MOV R%d, \"Free\"\n", address);
+	fprintf(fp,"PUSH R%d\n", address);
+	fprintf(fp,"CALL 0\n");
+	fprintf(fp,"POP R%d\nPOP R%d\n",address, address);
+	
+	return address;
 }
 
 int allocCodeGen(FILE *fp){
-	return 1;
+	int temp= getReg();
+	
+	fprintf(fp, "MOV R%d, \"Alloc\"\n",temp);
+	fprintf(fp,"PUSH R%d\nCALL 0\n",temp);
+	fprintf(fp,"POP R%d\n",temp);
+	
+	return temp;
 }
 
 
-void initCodeGen(){
-
+int initCodeGen(FILE *fp){
+	fprintf(fp, "MOV R0, \"Init\"\n");
+	fprintf(fp,"PUSH R0\nCALL 0\n");
+	fprintf(fp,"POP R0\n");
+	return 0;
 }

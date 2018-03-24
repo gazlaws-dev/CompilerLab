@@ -64,9 +64,13 @@ struct tnode * createFuncCallNode(char * funcName, struct tnode * arglist){
 	
 	arg = arglist;
 	
+	if(strcmp(funcName,"init")==0 || strcmp(funcName,"free")==0 || strcmp(funcName,"alloc")==0){
+		return createTree(NULL,TLookup("int"), funcName, tFCALL, NULL ,NULL, arg ,NULL,NULL);
+	}
+	
 	if(gtemp == NULL){
 					yyerror("Yacc : Undeclared function");
-		}
+	}
 	
 	paramlist = gtemp->paramlist;
 	while(paramlist!=NULL && arglist!=NULL){
@@ -176,6 +180,9 @@ struct tnode* createAsgNode(struct tnode *l, struct tnode *r){
 	}else if(strcmp(r->type->name,"NULL")==0){
 			return createTree(NULL,NULL, NULL,tASSIGN,NULL, l, NULL,r,NULL);
 		}
+	else if(strcmp(r->name,"alloc")==0 || strcmp(r->name,"free") && l->nodetype==tUTYPE ){
+		return createTree(NULL,NULL, NULL,tASSIGN,NULL, l, NULL,r,NULL);
+	}
 	else{
 		printf("%s:%d,%s\n,%d,%s\n\n",l->name,l->nodetype,l->type->name,r->nodetype,r->type->name);
 		yyerror("Type mismatch - cannot assign \n");
@@ -189,7 +196,9 @@ struct tnode* createNumNode(int val){
 }
 
 struct tnode* createOpNode(int nodetype, struct tnode *l, struct tnode *r){
-	if ((strcmp(l->type->name,"int")==0) && (strcmp(r->type->name,"int")==0)){
+	if (((strcmp(l->type->name,"int")==0) && (strcmp(r->type->name,"int")==0))
+		|| (strcmp(r->type->name,"NULL")==0)
+		){
 		switch(nodetype){
 			case tADD:
 			case tSUB:
@@ -210,7 +219,8 @@ struct tnode* createOpNode(int nodetype, struct tnode *l, struct tnode *r){
 		}
 	else{	
 			showST();
-			printf("Type mismatch %d,%s %d,%s\n",l->nodetype,l->type->name,r->nodetype,r->type->name);
+			
+			printf("OPerator Type mismatch %d,%s %d,%s\n",l->nodetype,l->type->name,r->nodetype,r->type->name);
 			exit(1);
 		}
 }

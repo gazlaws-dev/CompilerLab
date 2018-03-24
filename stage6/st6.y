@@ -37,8 +37,8 @@ prog :  TypeDefBlock GDeclBlock FDefBlock MainBlock {
 		showTT();
 	 	showST();
 	 	fprintf(fout,"%d\nMAIN\n%d\n%d\n%d\n%d\n%d\n%d\n",0,0,0,0,0,1,0);
-	 	//codeGen($3,fout);
-	 	//codeGen($4,fout);
+	 	codeGen($3,fout);
+	 	codeGen($4,fout);
 	 	freeAllReg();
 	 	fprintf(fout,"INT 10\n");
 		printf("\nSuccessfully parsed program with fdecl\n");
@@ -48,7 +48,7 @@ prog :  TypeDefBlock GDeclBlock FDefBlock MainBlock {
 	 	showTT();
 	 	showST();
 	 	fprintf(fout,"%d\nMAIN\n%d\n%d\n%d\n%d\n%d\n%d\nMOV SP, %d\nMOV BP, %d\n",0,0,0,0,0,1,0,staticSize,staticSize);
-	 	//codeGen($3,fout);
+	 	codeGen($3,fout);
 	 	fprintf(fout,"INT 10\n");
 	 	printf("Successfully parsed program\n");
 	 	exit(1);
@@ -63,11 +63,11 @@ TypeDefList   : TypeDefList TypeDef
               | TypeDef
               ;
 
-TypeDef       : ID { TInstall($1->name); currType=strdup($1->name);} '{' FieldDeclList '}'   {}
+TypeDef       : ID { TInstall($1->name); currType=strdup($1->name);} '{' FieldDeclList '}'   {resetFieldIndex();}
               ;
 
 FieldDeclList : FieldDeclList FieldDecl {}
-              | FieldDecl {resetFieldIndex();}
+              | FieldDecl {}
               ;
 
 FieldDecl    : TypeName ID ';'	{ addField(currType, TLookup($1->name), $2->name);
@@ -607,6 +607,8 @@ Expr : Expr "+" Expr	{
 							}
 	| NULLTOKEN {
 		$1->type=TLookup("NULL");
+		$1->val=0;
+		$1->nodetype=tNUM;
 		}
 ;
 

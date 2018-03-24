@@ -520,8 +520,8 @@ static const yytype_uint16 yyrline[] =
      279,   283,   285,   291,   295,   301,   305,   308,   331,   354,
      387,   391,   395,   399,   401,   404,   408,   411,   414,   417,
      420,   423,   426,   429,   432,   435,   438,   439,   440,   445,
-     470,   496,   523,   548,   571,   602,   603,   608,   613,   615,
-     616
+     470,   496,   523,   548,   571,   602,   603,   608,   615,   617,
+     618
 };
 #endif
 
@@ -1480,8 +1480,8 @@ yyreduce:
 		showTT();
 	 	showST();
 	 	fprintf(fout,"%d\nMAIN\n%d\n%d\n%d\n%d\n%d\n%d\n",0,0,0,0,0,1,0);
-	 	//codeGen($3,fout);
-	 	//codeGen($4,fout);
+	 	codeGen((yyvsp[-1]),fout);
+	 	codeGen((yyvsp[0]),fout);
 	 	freeAllReg();
 	 	fprintf(fout,"INT 10\n");
 		printf("\nSuccessfully parsed program with fdecl\n");
@@ -1496,7 +1496,7 @@ yyreduce:
 	 	showTT();
 	 	showST();
 	 	fprintf(fout,"%d\nMAIN\n%d\n%d\n%d\n%d\n%d\n%d\nMOV SP, %d\nMOV BP, %d\n",0,0,0,0,0,1,0,staticSize,staticSize);
-	 	//codeGen($3,fout);
+	 	codeGen((yyvsp[0]),fout);
 	 	fprintf(fout,"INT 10\n");
 	 	printf("Successfully parsed program\n");
 	 	exit(1);
@@ -1512,7 +1512,7 @@ yyreduce:
 
   case 9:
 #line 66 "st6.y" /* yacc.c:1646  */
-    {}
+    {resetFieldIndex();}
 #line 1517 "y.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1524,7 +1524,7 @@ yyreduce:
 
   case 11:
 #line 70 "st6.y" /* yacc.c:1646  */
-    {resetFieldIndex();}
+    {}
 #line 1529 "y.tab.c" /* yacc.c:1646  */
     break;
 
@@ -2415,31 +2415,33 @@ yyreduce:
 #line 608 "st6.y" /* yacc.c:1646  */
     {
 		(yyvsp[0])->type=TLookup("NULL");
+		(yyvsp[0])->val=0;
+		(yyvsp[0])->nodetype=tNUM;
 		}
-#line 2420 "y.tab.c" /* yacc.c:1646  */
+#line 2422 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 108:
-#line 613 "st6.y" /* yacc.c:1646  */
+#line 615 "st6.y" /* yacc.c:1646  */
     {	(yyvsp[0])->arglist=(yyvsp[-2]);
 							(yyval)=(yyvsp[0]);}
-#line 2427 "y.tab.c" /* yacc.c:1646  */
+#line 2429 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 109:
-#line 615 "st6.y" /* yacc.c:1646  */
+#line 617 "st6.y" /* yacc.c:1646  */
     {(yyval)=(yyvsp[0]);}
-#line 2433 "y.tab.c" /* yacc.c:1646  */
+#line 2435 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 110:
-#line 616 "st6.y" /* yacc.c:1646  */
+#line 618 "st6.y" /* yacc.c:1646  */
     {(yyval)=NULL;}
-#line 2439 "y.tab.c" /* yacc.c:1646  */
+#line 2441 "y.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 2443 "y.tab.c" /* yacc.c:1646  */
+#line 2445 "y.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2667,7 +2669,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 621 "st6.y" /* yacc.c:1906  */
+#line 623 "st6.y" /* yacc.c:1906  */
 
 
 int getStaticSpace(int size){

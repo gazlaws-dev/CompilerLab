@@ -94,7 +94,7 @@ endtype {
 	return ENDTYPE;
 }
 
-NULL {
+null {
 		char * temp = strdup(yytext);
 		yylval = createVarNode(temp);
 		return NULLTOKEN;

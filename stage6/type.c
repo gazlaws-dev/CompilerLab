@@ -94,7 +94,7 @@ void addField(char* currType, struct Typetable* fieldType, char *fieldName){
 	struct Fieldlist * fieldEntry = (struct Fieldlist *) malloc (sizeof(struct Fieldlist));
 	struct Typetable* type=TLookup(currType);
 	
-	fieldEntry->fieldIndex = fieldIndexCount++;//???
+	fieldEntry->fieldIndex = fieldIndexCount++;
 	fieldEntry->name =fieldName;
 	fieldEntry->type = fieldType;
 	fieldEntry->next = type->fields;
@@ -130,7 +130,7 @@ void showTT(){
 	cFL = current->fields;
 		while(cFL){
 			printf("field name %s",cFL->name);
-			printf(", type: %s\n",cFL->type->name);
+			printf(", type: %s,index: %d\n",cFL->type->name,cFL->fieldIndex );
 			cFL=cFL->next;
 		}
 	current=current->next;
