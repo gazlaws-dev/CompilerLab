@@ -109,7 +109,7 @@ int main()
     in = inOrder(Root);
     
     write(Root.a);
-    in = free(Root);
+    //in = free(Root);
     val = Root;
     write(val);
     write(Root.a);

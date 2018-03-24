@@ -35,7 +35,7 @@
 #define tBRKP 34
 #define tREF 35
 #define tDEREF 36
-
+#define tEXIT 37
 #define tFUNC 38
 #define tFCALL 39
 #define tRET 40

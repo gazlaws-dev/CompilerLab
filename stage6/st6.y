@@ -16,7 +16,7 @@
 
 
 %token BEG END READ WRITE NUM ID IF THEN ELSE ENDIF WHILE DO ENDWHILE BREAK CONTINUE
-%token DECL ENDDECL INT STR LIT BRKP RETURN MAIN TYPE ENDTYPE MOD TUPLE NULLTOKEN
+%token DECL ENDDECL INT STR LIT BRKP RETURN MAIN TYPE ENDTYPE MOD TUPLE NULLTOKEN EXIT
 %token LT "<"
 %token GT ">"
 %token LE "<="
@@ -271,11 +271,16 @@ Stmt : InputStmt	//defaults to $$=$1
 		|WhileStmt
 		|BrkContStmt
 		|Breakpoint
+		|Exit;
 ;
 
 Breakpoint: BRKP {
 	$$ = createTree(NULL,NULL, NULL,tBRKP,NULL, NULL,NULL, NULL,NULL);	
 	};
+	
+Exit: EXIT {
+		$$=createExitNode();
+	}
 
 InputStmt: READ '(' Expr ')'		{
 										$$= createReadNode($3);
@@ -608,9 +613,10 @@ Expr : Expr "+" Expr	{
 							}
 	| NULLTOKEN {
 		$1->type=TLookup("NULL");
-		$1->val=0;
+		$1->val=-1;
 		$1->nodetype=tNUM;
 		}
+
 ;
 
 ArgList: ArgList ',' Expr {	$3->arglist=$1;

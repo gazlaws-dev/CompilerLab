@@ -94,6 +94,10 @@ endtype {
 	return ENDTYPE;
 }
 
+exit {
+	return EXIT;
+}
+
 null {
 		char * temp = strdup(yytext);
 		yylval = createVarNode(temp);

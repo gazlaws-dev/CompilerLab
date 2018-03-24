@@ -73,16 +73,17 @@ extern int yydebug;
     MOD = 283,
     TUPLE = 284,
     NULLTOKEN = 285,
-    LT = 286,
-    GT = 287,
-    LE = 288,
-    GE = 289,
-    EQ = 290,
-    NE = 291,
-    ADD = 292,
-    SUB = 293,
-    MUL = 294,
-    DIV = 295
+    EXIT = 286,
+    LT = 287,
+    GT = 288,
+    LE = 289,
+    GE = 290,
+    EQ = 291,
+    NE = 292,
+    ADD = 293,
+    SUB = 294,
+    MUL = 295,
+    DIV = 296
   };
 #endif
 /* Tokens.  */
@@ -114,16 +115,17 @@ extern int yydebug;
 #define MOD 283
 #define TUPLE 284
 #define NULLTOKEN 285
-#define LT 286
-#define GT 287
-#define LE 288
-#define GE 289
-#define EQ 290
-#define NE 291
-#define ADD 292
-#define SUB 293
-#define MUL 294
-#define DIV 295
+#define EXIT 286
+#define LT 287
+#define GT 288
+#define LE 289
+#define GE 290
+#define EQ 291
+#define NE 292
+#define ADD 293
+#define SUB 294
+#define MUL 295
+#define DIV 296
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

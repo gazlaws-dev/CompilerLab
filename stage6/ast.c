@@ -195,6 +195,10 @@ struct tnode* createNumNode(int val){
 	return createTree(val,TLookup("int"), NULL,tNUM, NULL,NULL,NULL,NULL,NULL);
 }
 
+struct tnode* createExitNode(){
+	return createTree(NULL,NULL, NULL,tEXIT, NULL,NULL,NULL,NULL,NULL);
+}
+
 struct tnode* createOpNode(int nodetype, struct tnode *l, struct tnode *r){
 	if (((strcmp(l->type->name,"int")==0) && (strcmp(r->type->name,"int")==0))
 		|| (strcmp(r->type->name,"NULL")==0)

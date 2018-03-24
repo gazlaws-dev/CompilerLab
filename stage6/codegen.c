@@ -208,7 +208,7 @@ int codeGen(struct tnode* t,FILE *fp){
 					
 					fprintf(fp,"MOV [R%d], R%d\n",reg,p);
 					fprintf(fp,"POP BP\n");
-					fprintf(fp,"BRKP\nRET\n");
+					fprintf(fp,"RET\n");
 				}
 				return -1;
 
@@ -238,7 +238,7 @@ int codeGen(struct tnode* t,FILE *fp){
 						while(t->middle->middle!=NULL){	//head.left.val		//left.val
 							struct Fieldlist* f = FLookup(type,t->middle->name);
 							int fieldIndex = f->fieldIndex;		//0		//3
-							fprintf(fp,"ADD R%d, %d\n",loc, fieldIndex+1);	//1032+3		//1040+0
+							fprintf(fp,"ADD R%d, %d\n",loc, fieldIndex);	//1032+3		//1040+0
 							fprintf(fp,"MOV R%d, [R%d]\n",loc, loc);		//[1032+3] ==would be 1040(another bst)							
 							type = f->type;				//bst
 							
@@ -249,7 +249,7 @@ int codeGen(struct tnode* t,FILE *fp){
 							struct Fieldlist* f = FLookup(type, t->middle->name);
 							int fieldIndex;
 							fieldIndex = f->fieldIndex;
-							fprintf(fp,"ADD R%d, %d\n",loc, fieldIndex+1);	//1040+0
+							fprintf(fp,"ADD R%d, %d\n",loc, fieldIndex);	//1040+0
 							fprintf(fp,"MOV R%d, [R%d]\n",loc, loc);		//[1040+0]
 						}
 						return loc;
@@ -308,7 +308,7 @@ int codeGen(struct tnode* t,FILE *fp){
 						while(t->middle->middle!=NULL){	//head.left.val		//left.val
 							struct Fieldlist* f = FLookup(type,t->middle->name);
 							int fieldIndex = f->fieldIndex;		//0		//3
-							fprintf(fp,"ADD R%d, %d\n",loc, fieldIndex+1);	//1032+3		//1040+0
+							fprintf(fp,"ADD R%d, %d\n",loc, fieldIndex);	//1032+3		//1040+0
 							fprintf(fp,"MOV R%d, [R%d]\n",loc, loc);		//[1032+3] ==would be 1040(another bst)							
 							type = f->type;				//bst
 							
@@ -319,7 +319,7 @@ int codeGen(struct tnode* t,FILE *fp){
 							struct Fieldlist* f = FLookup(type, t->middle->name);
 							int fieldIndex;
 							fieldIndex = f->fieldIndex;
-							fprintf(fp,"ADD R%d, %d\n",loc, fieldIndex+1);	//1040+0
+							fprintf(fp,"ADD R%d, %d\n",loc, fieldIndex);	//1040+0
 						}
 					}else {
 					
@@ -365,6 +365,10 @@ int codeGen(struct tnode* t,FILE *fp){
 		}
 		case tCONTINUE:{
 			fprintf(fp,"JMP L%d\n", pop(&contstack));
+			return -1;
+		}
+		case tEXIT:{
+			fprintf(fp,"INT 10\n");
 			return -1;
 		}
 		default:
