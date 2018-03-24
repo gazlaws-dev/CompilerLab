@@ -18,16 +18,30 @@
 
 L(.)*:[\n] {
 			if(pass==1){
-				char t;
-				t = yytext[1];
-				insert(t-'0',currLine);
+				int t;
+				char num[3];
+				int i=1;
+				while(yytext[i]!=':'){
+					num[i-1]=yytext[i];
+					i++;
+				}
+				num[i-1]='\0';
+				t = atoi(num);
+				insert(t,currLine);
 			}
 			}
 F(.)*:[\n] {
 			if(pass==1){
-				char t;
-				t = yytext[1];
-				finsert(t-'0',currLine);
+				int t;
+				char num[3];
+				int i=1;
+				while(yytext[i]!=':'){
+					num[i-1]=yytext[i];
+					i++;
+				}
+				num[i-1]='\0';
+				t = atoi(num);
+				finsert(t,currLine);
 			}
 		}
 			
@@ -55,14 +69,24 @@ F(.)*:[\n] {
 				if(pass == 1){
 					fstrcpy(ftemp, yytext);
 				} else {
-					int i, labelNo;				
-					char tempS[50];
+					int i, labelNo,j;				
+					char tempS[50],num[3];
 					//saves string upto 'L' eg "JMP ", "JZ R4, "
+					
 					for(i=0; i<yyleng && yytext[i]!='L' ; i++){
 						tempS[i] = yytext[i];
 					}
 					tempS[i]='\0';
-					labelNo = yytext[i+1] - '0';
+					i++;
+					j=0;
+					
+					while(yytext[i]!='\n'){
+						num[j]=yytext[i];
+						j++;
+						i++;
+					}
+					num[j]='\0';
+					labelNo = atoi(num);
 					fprintf(fout,"%s%d\n",tempS,search(labelNo));
 				}
 				incLine();
