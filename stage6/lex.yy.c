@@ -785,28 +785,42 @@ YY_RULE_SETUP
 #line 19 "label_tr.l"
 {
 			if(pass==1){
-				char t;
-				t = yytext[1];
-				insert(t-'0',currLine);
+				int t;
+				char num[3];
+				int i=1;
+				while(yytext[i]!=':'){
+					num[i-1]=yytext[i];
+					i++;
+				}
+				num[i-1]='\0';
+				t = atoi(num);
+				insert(t,currLine);
 			}
 			}
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 26 "label_tr.l"
+#line 33 "label_tr.l"
 {
 			if(pass==1){
-				char t;
-				t = yytext[1];
-				finsert(t-'0',currLine);
+				int t;
+				char num[3];
+				int i=1;
+				while(yytext[i]!=':'){
+					num[i-1]=yytext[i];
+					i++;
+				}
+				num[i-1]='\0';
+				t = atoi(num);
+				finsert(t,currLine);
 			}
 		}
 	YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 34 "label_tr.l"
+#line 48 "label_tr.l"
 {
 			if(pass==1){
 					finsert(0,currLine);
@@ -816,7 +830,7 @@ YY_RULE_SETUP
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 40 "label_tr.l"
+#line 54 "label_tr.l"
 {
 	
 
@@ -833,20 +847,30 @@ YY_RULE_SETUP
 case 5:
 /* rule 5 can match eol */
 YY_RULE_SETUP
-#line 53 "label_tr.l"
+#line 67 "label_tr.l"
 {	
 				
 				if(pass == 1){
 					fstrcpy(ftemp, yytext);
 				} else {
-					int i, labelNo;				
-					char tempS[50];
+					int i, labelNo,j;				
+					char tempS[50],num[3];
 					//saves string upto 'L' eg "JMP ", "JZ R4, "
+					
 					for(i=0; i<yyleng && yytext[i]!='L' ; i++){
 						tempS[i] = yytext[i];
 					}
 					tempS[i]='\0';
-					labelNo = yytext[i+1] - '0';
+					i++;
+					j=0;
+					
+					while(yytext[i]!='\n'){
+						num[j]=yytext[i];
+						j++;
+						i++;
+					}
+					num[j]='\0';
+					labelNo = atoi(num);
 					fprintf(fout,"%s%d\n",tempS,search(labelNo));
 				}
 				incLine();
@@ -855,7 +879,7 @@ YY_RULE_SETUP
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 71 "label_tr.l"
+#line 95 "label_tr.l"
 {
 				
 				if(pass == 1){
@@ -883,7 +907,7 @@ YY_RULE_SETUP
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 95 "label_tr.l"
+#line 119 "label_tr.l"
 {	
 			if(pass == 1){
 					fstrcpy(ftemp, yytext);
@@ -895,10 +919,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 106 "label_tr.l"
+#line 130 "label_tr.l"
 ECHO;
 	YY_BREAK
-#line 902 "lex.yy.c"
+#line 926 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1899,7 +1923,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 106 "label_tr.l"
+#line 130 "label_tr.l"
 
 
 

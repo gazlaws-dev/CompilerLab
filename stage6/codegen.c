@@ -231,10 +231,6 @@ int codeGen(struct tnode* t,FILE *fp){
 									type=(t->entry->localEntry)->type;
 						else		type = t->entry->globalEntry->type;	//bst
 						
-						printf("t->name: %s\n",t->name);
-						printf("t->type: %s\n",t->type->name);
-						printf("t->rel type: %s\n",type->name);
-						if(type==NULL) yyerror("why is it null\n");
 						loc = getLocReg(t,fp);	//4096 holding the heap address
 						fprintf(fp,"MOV R%d, [R%d]\n",loc, loc);	//[4096] which may be 1032
 						
@@ -305,10 +301,6 @@ int codeGen(struct tnode* t,FILE *fp){
 						if(t->entry->isLoc)
 									type=(t->entry->localEntry)->type;
 						else		type = t->entry->globalEntry->type;	//bst
-						printf("t->name: %s\n",t->name);
-						printf("t->type: %s\n",t->type->name);
-						printf("t->rel type: %s\n",type->name);
-						if(type==NULL) yyerror("why is it null\n");
 						loc = getLocReg(t,fp);	//4096 holding the heap address
 						fprintf(fp,"MOV R%d, [R%d]\n",loc, loc);	//[4096] which may be 1032
 						

@@ -202,6 +202,7 @@ Param		: Type ID {
 		   ;
 				
 LdeclBlock: DECL LDecList ENDDECL{} | DECL ENDDECL{}
+			| {}
 ;
 LDecList :LDecList LDecl ';'{}
 		| LDecl ';'	{}

@@ -1,54 +1,33 @@
-
-
 type
-  List
-  {
-    int data;
-    List next;
-  }
+node {
+    int x;
+}
 endtype
-
 decl
-    List head;
+    node fun(node t);
 enddecl
-
+node fun(node t) { // t and r points to the same heap memory location.
+    begin
+        t.x=3; // modifies heap, change is visible in main.
+        t = null; // r does not become NULL in main() by this assignment
+        return t;
+    end
+}
 int main()
 {
-  decl
-    int length, x;
-    List p, q;
-  enddecl
-
-  begin
-    head=null;
-    read(length); 
-
-    q=head;
-    while (length!=0)  do
-      read(x);
-      p=alloc();
-      p.data=x;
-      p.next=null;
-
-      if (head==null) then
-      head=p;
-      q=p;
-      else
-      q.next=p;
-      q=q.next;
-      endif;
-      
-      length=length-1;
-    endwhile;
-
-    p=head;
-    while(p!=null)  do
-      write(p.data);
-      p=p.next;
-    endwhile;
-
-    return 1;
-  end
+    decl
+        int val;
+        node r, s;
+    enddecl
+    begin
+    	val = r;
+  		write(val);
+        r = alloc(); // r stores address of a node in the heap memory
+        val=r;
+        write(val);
+        r.x = 5;
+        s = fun(r);
+        write(r.x); // Now 3 will be output.
+        return 0;
+    end
 }
-
-
