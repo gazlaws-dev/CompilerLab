@@ -1,0 +1,56 @@
+class
+Person{
+	decl
+		str name;
+		int age;
+		int printDetails();
+		str findName();
+		int createPerson(str name, int age);
+	enddecl
+	int printDetails(){
+		decl
+		enddecl
+		begin
+			write(self.name);
+			write(self.age);
+			return 1;
+		end
+	}
+	str findName(){
+		decl
+		enddecl
+		begin
+			return self.name;
+		end
+	}
+	int createPerson(str name, int age){
+		decl
+		enddecl
+		begin
+			self.name=name;
+			self.age=age;
+			return 1;
+		end
+	}
+} /*end of Person class */
+endclass
+
+decl
+    int n,temp;
+    str name;
+    Person first;
+    //Student second;
+    Person arbitrary;
+enddecl
+
+begin
+    //n = initialize();
+    first=new(Person);
+    temp = first.createPerson(“Rogers”, 37);               /* invokes method in class person */
+    second=new(Student);
+    temp = second.createStudent(“Mathew”, 35, 999, “CS”);  /*invokes method in class student */
+    name = first.findName();                              /* invokes method in class person */
+    name = second.findName();                             /* invokes inherited method in class person */
+    delete(first);
+    delete(second);
+end;
