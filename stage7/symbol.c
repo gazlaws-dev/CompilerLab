@@ -1,40 +1,3 @@
-struct tableEntry{
-	int isLoc;
-	struct globalEntry* globalEntry;
-	struct localEntry* localEntry;
-	struct localTable* localTable;
-};
-
-struct globalEntry{
-	char *name; //name of the variable or function
-	//int type; //type of the variable:(Integer / String)
-	struct Typetable *type; //pointer to the Typetable entry of variable type/return type of the function
-	int size[2]; //size of an array
-	int nodetype;
-	int binding; //static binding of global variables
-	struct tnode *paramlist;//pointer to the head of the formal parameter list
-									//in the case of functions
-	int flabel; //a label for identifying the starting address of a function's code
-	struct globalEntry *next; //points to the next Global Symbol Table entry
-}; 
-
-
-struct localEntry{
-	char *name; //name of the variable
-	struct Typetable *type; //type of the variable
-	int nodetype; //just for pointer/var
-	int binding; //local binding of the variable
-	struct localEntry *next;//points to the next Local Symbol Table entry
-}; 
-
-
-struct localTable{
-	char *funcName; //name of the function
-	struct localEntry * localEntry; //points to the first param in this function's Local Symbol Table
-	struct localTable *next;
-};
-
-
 struct localTable* localTableLookup(char *name){
     struct localTable* current = allLST;  // Initialize current
     while (current != NULL)
@@ -103,7 +66,7 @@ int paramCheck(char * funcName){
 	}
 	
 	if((gParam!=NULL && lParam==NULL)){
-		yyerror("Parameter number mismatch, too many in gparam\n");
+		yyerror("Parameter number mismatch, too many in gparam HERE\n");
 		}
 	if(gParam==NULL && lParam!=NULL){
 		yyerror("Parameter number mismatch, too many in lparam\n");
@@ -140,10 +103,15 @@ struct localEntry * localEntryLookup(char * funcName, char * varName){
 
 struct globalEntry * gLookup(char * name){
     struct globalEntry * current = symtable;
+    
+   
+    
     while (current != NULL)
     {
+    	
         if (strcmp(name,current->name)==0){
-            return current;}
+            return current;
+         }
         current = current->next;
     }
     return NULL;
@@ -174,13 +142,17 @@ struct tableEntry * lookup(char * name){
 
 }
 
-void gInstall(char *name, struct Typetable* type,int nodetype, int size0,int size1, int binding, struct tnode *paramlist,int flabel){
+void gInstall(char *name, char* typename,int nodetype, int size0,int size1, int binding, struct tnode *paramlist,int flabel){
 
 
 	if(gLookup(name) == NULL){
 					struct globalEntry* symEntry = (struct globalEntry*) malloc(sizeof(struct globalEntry));
 					symEntry->name = strdup(name);
-					symEntry->type = type; 	//str/int
+					if(TLookup(typename)!=NULL){
+						symEntry->type=TLookup(typename);
+					} else if(CLookup(typename)!=NULL){
+						symEntry->ctype = CLookup(typename);
+					}
 					symEntry->nodetype = nodetype;
 					symEntry->size[0]=size0;
 					symEntry->size[1]=size1;
@@ -207,18 +179,23 @@ void gInstall(char *name, struct Typetable* type,int nodetype, int size0,int siz
 
 void gAssignTypeDecl(struct tnode *typeNode, struct tnode *varlist){	//typeNode has the name 'int, str, bst',etc
 
-	struct globalEntry * t = NULL;
-	
-	while(varlist!=NULL){
-		t = gLookup(varlist->name);
-		switch(t->nodetype){	//var, pvar, arr,tfunc
-			case tPVAR: t->type = typeNode->type->next;	//int's next/str's next should be pint/pstr
-						break;
-			default: t->type = typeNode->type;
-						break;
+	struct globalEntry * t = NULL; 	
+	 
+	if(typeNode->type!=NULL){
+		while(varlist!=NULL){
+			t = gLookup(varlist->name);
+			t->type = typeNode->type;
+			varlist=varlist->middle;
 		}
-		
-		varlist=varlist->middle;
+	} else {
+		while(varlist!=NULL){
+			t = gLookup(varlist->name);
+			t->ctype = typeNode->ctype;		//should work...
+											//should classes get more space here?
+			varlist=varlist->middle;
+		}
+		showST();
+	
 	}
 }
 
@@ -257,7 +234,20 @@ void showST(){
 	printf("------------Symbol Table-------------------\n");
     while (current != NULL)
     {
-        printf("Name:%9.9s Size:%d,%d Type:%s, FLabel:%d ,Nodetype: %d,Binding:%d\n",current->name,current->size[0],current->size[1] ,current->type->name,(current->flabel), (current->nodetype), current->binding);
+    	struct Classtable * ct = current->ctype;
+    	char * type;
+    	
+    	if(current->type==NULL && current->ctype==NULL){
+    		 current = current->next;
+    		 continue;
+    	}
+    	
+    	if(ct!=NULL){
+    		type= strdup(current->ctype->name);
+    	} else {
+    		type= strdup(current->type->name);
+    	}
+        printf("Name:%9.9s Size:%d Type:%s, FLabel:%d ,Nodetype: %d,Binding:%d\n",current->name,current->size[0],type,(current->flabel), (current->nodetype), current->binding);
         if((current->nodetype)==38){
         	struct tnode* pl = (current->paramlist);
 			while(pl!=NULL){

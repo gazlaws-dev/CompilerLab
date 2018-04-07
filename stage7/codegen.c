@@ -109,11 +109,16 @@ int codeGen(struct tnode* t,FILE *fp){
 				int tempCount=0;
 				if(strcmp("init",t->name)==0){
 					return initCodeGen(fp);
-				} else if(strcmp("alloc",t->name)==0){
+				} else if(strcmp("new",t->name)==0){	//change to new
 					return allocCodeGen(fp);	//should return a new temp variable containing address
-				} else if(strcmp("free",t->name)==0){
-					//make sure arg is a utype TODO
-					return freeCodeGen(codeGen(arg,fp),fp);
+				} else if(strcmp("delete",t->name)==0){
+					//make sure arg is a utype TODO -done
+					//make sure it's been allocated before
+					if(t->ctype!=NULL){
+						return freeCodeGen(codeGen(arg,fp),fp);
+					} else {
+						yyerror("Delete() expects a class");
+					}
 				//takes the temp variable containing free(t) -t's binding ?not in symbol table because it's run time?. t's binding to a single space (in static or stack) that holds it's address to the real space in heap)
 				}
 				
@@ -129,6 +134,7 @@ int codeGen(struct tnode* t,FILE *fp){
 					}
 				//one for return value	
 				fprintf(fp,"PUSH R0\n");
+				
 				
 				fprintf(fp,"CALL F%d\n",t->entry->globalEntry->flabel);
 				//SP points to Ret value
@@ -167,8 +173,13 @@ int codeGen(struct tnode* t,FILE *fp){
 					initCodeGen(fp);
 					fprintf(fp,"MOV SP, %d\nMOV BP, %d\n",staticSize,staticSize);
 					fprintf(fp,"PUSH BP\n");
-				} else
-					{fprintf(fp,"F%d:\n", label_1);
+				} else if(t->entry->globalEntry==NULL){//method defn won't be in globalST
+					struct Memberfunclist* mem = mLookup(t->entry->localTable->funcName,allClassSearch(t->entry->localTable->funcName));
+					label_1 = mem->flabel;
+					fprintf(fp,"F%d:\n", label_1);
+					fprintf(fp,"PUSH BP\nMOV BP,SP\n");
+				} else{
+					fprintf(fp,"F%d:\n", label_1);
 					fprintf(fp,"PUSH BP\nMOV BP,SP\n");	//SUB BP,1\n?
 					}				
 				

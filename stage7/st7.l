@@ -103,6 +103,27 @@ null {
 		yylval = createVarNode(temp);
 		return NULLTOKEN;
 }
+
+class {
+		return CLASS;
+}
+
+self {
+	return SELF;
+}
+
+endclass {
+	return ENDCLASS;
+}
+
+new {
+	return NEW;
+}
+
+delete {
+	return DELETE;
+}
+
 {single}.*[\n] ;
 
 "<"	return LT;
@@ -150,7 +171,8 @@ null {
 "," {
 		return *yytext;
 }
-. {	yyerror("unknown character\n");
+. {	printf("%s",yytext);
+	yyerror("unknown character\n");
 	exit(1);
 	}
 

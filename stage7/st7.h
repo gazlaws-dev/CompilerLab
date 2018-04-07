@@ -40,6 +40,7 @@
 #define tFCALL 39
 #define tRET 40
 #define tBODY 41
+#define tMCALL 42
 
 int tempreg;
 int label;
@@ -52,7 +53,7 @@ int staticSize = 4096;	//leave space for main's return value and return address?
 int localOffset=1;
 int argOffset=-3;
 int fieldIndexCount =0;
-
+int classIndex=0;
 
 struct globalEntry * gLookup(char * name);
 
@@ -61,7 +62,7 @@ struct Typetable * typetable = NULL;
 struct globalEntry * symtable = NULL;
 struct localTable * allLST = NULL;
 char *currFunc,*currType;
-
+struct Classtable * currCptr = NULL;
 
 // A structure to represent a stack
 struct StackNode
@@ -73,9 +74,60 @@ typedef struct tnode {
 	int val;	// value of a number for NUM nodes.
 	//int type;	//type of variable
 	struct Typetable *type;
+	struct Classtable * ctype;
 	char* name;	//name of a variable for ID nodes  
 	int nodetype;  // information about non-leaf nodes - read/write/connector/+/* etc. 
 	struct tableEntry *entry; //pointerto entry for global variables and functions 
 	struct tnode *left,*middle,*right,*arglist;	//left and right branches   
 }tnode;
 
+
+typedef struct Typetable{
+    char *name;                 //type name
+    int size;                   //size of the type
+    struct Fieldlist *fields;   //pointer to the head of fields list
+    struct Typetable *next,*prev;     // pointer to the next type table entry
+} Typetable;
+
+
+struct Typetable* TLookup(char *name);
+
+
+struct tableEntry{
+	int isLoc;
+	struct globalEntry* globalEntry;
+	struct localEntry* localEntry;
+	struct localTable* localTable;
+};
+
+struct globalEntry{
+	char *name; //name of the variable or function
+	//int type; //type of the variable:(Integer / String)
+	struct Typetable *type; //pointer to the Typetable entry of variable type/return type of the function
+	struct Classtable *ctype;
+	int size[2]; //size of an array
+	int nodetype;
+	int binding; //static binding of global variables
+	struct tnode *paramlist;//pointer to the head of the formal parameter list
+									//in the case of functions
+	int flabel; //a label for identifying the starting address of a function's code
+	struct globalEntry *next; //points to the next Global Symbol Table entry
+}; 
+
+
+struct localEntry{
+	char *name; //name of the variable
+	struct Typetable *type; //type of the variable
+	int nodetype; //just for pointer/var
+	int binding; //local binding of the variable
+	struct localEntry *next;//points to the next Local Symbol Table entry
+}; 
+
+
+struct localTable{
+	char *funcName; //name of the function
+	struct localEntry * localEntry; //points to the first param in this function's Local Symbol Table
+	struct localTable *next;
+};
+
+struct localTable* localTableLookup(char *name);

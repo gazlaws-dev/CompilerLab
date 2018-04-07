@@ -3,14 +3,18 @@ Person{
 	decl
 		str name;
 		int age;
-		int printDetails();
+		int printDet();
 		str findName();
-		int createPerson(str name, int age);
+		int createPsn(str name, int age);
 	enddecl
-	int printDetails(){
+	int printDet(){
 		decl
+			str a,b;
+			//Person me; //Can't do this local, must be global
 		enddecl
 		begin
+			//a = "Details:";
+			//write(a);
 			write(self.name);
 			write(self.age);
 			return 1;
@@ -23,7 +27,7 @@ Person{
 			return self.name;
 		end
 	}
-	int createPerson(str name, int age){
+	int createPsn(str name, int age){
 		decl
 		enddecl
 		begin
@@ -32,25 +36,29 @@ Person{
 			return 1;
 		end
 	}
-} /*end of Person class */
+} ///end of Person class
 endclass
 
 decl
     int n,temp;
     str name;
     Person first;
-    //Student second;
-    Person arbitrary;
 enddecl
 
-begin
-    //n = initialize();
-    first=new(Person);
-    temp = first.createPerson(“Rogers”, 37);               /* invokes method in class person */
-    second=new(Student);
-    temp = second.createStudent(“Mathew”, 35, 999, “CS”);  /*invokes method in class student */
-    name = first.findName();                              /* invokes method in class person */
-    name = second.findName();                             /* invokes inherited method in class person */
-    delete(first);
-    delete(second);
-end;
+int main()
+{
+  decl
+    int temp;
+  enddecl
+
+  begin
+   	first= new(Person);
+   	temp = 6;
+	temp = first.createPsn("Rogers", 37);
+	temp = first.printDet();
+   
+    return 0;
+  end
+}
+
+

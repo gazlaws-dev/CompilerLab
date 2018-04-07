@@ -1,9 +1,4 @@
-typedef struct Typetable{
-    char *name;                 //type name
-    int size;                   //size of the type
-    struct Fieldlist *fields;   //pointer to the head of fields list
-    struct Typetable *next,*prev;     // pointer to the next type table entry
-} Typetable;
+
 
 
 //updated one in class.c
@@ -69,7 +64,7 @@ void TypeTableCreate(){	//initiate with int,str, boolean, void
 struct Typetable* TLookup(char *name){
 
 	struct Typetable* current = typetable;
-	
+	if(name==NULL){return NULL;}
 	while(current!=NULL){
 		if(strcmp(current->name,name)==0){
 		

@@ -4,6 +4,8 @@
 	#include<limits.h>
 	#include<string.h>
 	#include"st7.h"
+	#include"class.c"
+	
 	#include"type.c"
 	#include"stack.c"
 	#include"symbol.c"
@@ -17,6 +19,7 @@
 
 %token BEG END READ WRITE NUM ID IF THEN ELSE ENDIF WHILE DO ENDWHILE BREAK CONTINUE
 %token DECL ENDDECL INT STR LIT BRKP RETURN MAIN TYPE ENDTYPE MOD TUPLE NULLTOKEN EXIT
+%token CLASS SELF ENDCLASS NEW DELETE
 %token LT "<"
 %token GT ">"
 %token LE "<="
@@ -37,8 +40,9 @@ prog :  TypeDefBlock ClassDefBlock GDeclBlock FDefBlock MainBlock {
 		showTT();
 	 	showST();
 	 	fprintf(fout,"%d\nMAIN\n%d\n%d\n%d\n%d\n%d\n%d\n",0,0,0,0,0,1,0);
-	 	//codeGen($3,fout);
+	 	//codeGen($2,fout);
 	 	//codeGen($4,fout);
+	 	//codeGen($5,fout);
 	 	freeAllReg();
 	 	fprintf(fout,"INT 10\n");
 		printf("\nSuccessfully parsed program with fdecl\n");
@@ -48,7 +52,7 @@ prog :  TypeDefBlock ClassDefBlock GDeclBlock FDefBlock MainBlock {
 	 	showTT();
 	 	showST();
 	 	fprintf(fout,"%d\nMAIN\n%d\n%d\n%d\n%d\n%d\n%d\nMOV SP, %d\nMOV BP, %d\n",0,0,0,0,0,1,0,staticSize,staticSize);
-	 	//codeGen($3,fout);
+	 	//codeGen($4,fout);
 	 	fprintf(fout,"INT 10\n");
 	 	printf("Successfully parsed program\n");
 	 	exit(1);
@@ -81,35 +85,46 @@ TypeName     : INT
 
 //CLASS
 
-ClassDefBlock : CLASS ClassDefList ENDCLASS
+ClassDefBlock : CLASS ClassDefList ENDCLASS	{printf("Classes over!\n");
+											currCptr=NULL;
+											$$=$2;}
                 |
 ;
-ClassDefList : ClassDefList ClassDef
-               | ClassDef
+ClassDefList : ClassDefList ClassDef{
+									$$ = createTree(NULL,NULL,NULL, NULL,tCONNECT,NULL, $1,NULL, $2,NULL);}
+               | ClassDef	
 ;
-Classdef      : Cname '{' DECL Fieldlists MethodDecl ENDDECL MethodDefns '}'
+ClassDef      : Cname '{' DECL Fieldlists MethodDecl {printf("Methods\n");} ENDDECL MethodDefns {printf("Methoddefn\n");}'}'	{printf("Class\n");$$=$7;}
 ;
-Cname         : ID       	{Cptr = Cinstall($1->Name,NULL);}         
-             // | ID Extends ID	{Cptr = Cinstall($1->Name,$3->Name);}
+Cname         : ID       	{ currCptr = CInstall($1->name,NULL); printf("Installing %s\n",$1->name);}         
+             // | ID Extends ID	{currCptr = CInstall($1->name,$3->name);}
 ;
 
-Fieldlists 	: Fieldlists Fld   
+Fieldlists 	: Fieldlists Fld
 		|
 ; 
 
-Fld         : ID ID ';'		{Class_Finstall(Cptr,$1->Name,$2->Name);} //Installing the field to the class
+Fld         : Type ID ';'		{printf("fld\n");
+										Class_Finstall(currCptr,$1->name,$2->name);} //Installing the field to the class
 ;
 
 MethodDecl : MethodDecl MDecl 
 	   | MDecl 
 ;
-MDecl      : ID ID '(' Paramlist ')' ';' {Class_Minstall(Cptr,$2->Name,Tlookup($1->Name),$4);} 
+MDecl      : Type ID '(' newParamList ')' ';' {Class_Minstall(currCptr,$2->name,$1->type,$4);} 
 											//Installing the method to class
 ;
-MethodDefns : MethodDefns FDef
-            | FDef
+MethodDefns : MethodDefns Fdef {	printf("method defanother\n");
+									$$ = createTree(NULL,NULL,NULL, NULL,tCONNECT,NULL, $1,NULL, $2,NULL);
+									}
+						
+            | Fdef {$$=$1;
+            	printf("method def1\n");
+					}
 ;
-GDeclBlock : DECL GDeclList ENDDECL		{}
+
+
+GDeclBlock : DECL GDeclList ENDDECL		{printf("GDECL Over\n");}
 		   |	{}
 		   ;
 
@@ -136,7 +151,9 @@ Gidlist	: Gidlist ',' Gid	{
 ;
 
 Gid		:ID		{//bst t; tVAR
-				gInstall($1->name,NULL,tVAR,1,0,getStaticSpace(1),NULL,NULL);
+				//2 for classes tho
+				printf("global id\n");
+				gInstall($1->name,NULL,tVAR,2,0,getStaticSpace(2),NULL,NULL);
 				$$=$1;
 				}
 		|fID '(' newParamList ')'	{
@@ -144,21 +161,6 @@ Gid		:ID		{//bst t; tVAR
 									$1->nodetype=tFUNC;
 									$$=$1;
 									}
-		|MUL ID	{
-				gInstall($1->name,NULL,tPVAR,1,0,getStaticSpace(1),NULL,NULL);
-				$2->nodetype=tPVAR;
-				$$=$2;
-				}
-		|ID '[' NUM ']'{
-				gInstall($1->name,NULL,tARR,$3->val,0,getStaticSpace($3->val),NULL,NULL);
-				$1->nodetype=tARR;
-				$$=$1;
-		}
-		|ID '[' NUM ']''[' NUM ']'{
-				gInstall($1->name,NULL,tDARR,$3->val,$6->val,getStaticSpace(($3->val)*($5->val)),NULL,NULL);
-				$1->nodetype=tDARR;
-				$$=$1;
-		}
 		;
 		
 newParamList	:  newParamList ',' Param  {
@@ -175,35 +177,67 @@ fID : ID {	currFunc=strdup($1->name);}
 ;
 
 FDefBlock:	 FDefBlock Fdef {
-						$$ = createTree(NULL,NULL, NULL,tCONNECT,NULL, $1,NULL, $2,NULL);
+						$$ = createTree(NULL,NULL,NULL, NULL,tCONNECT,NULL, $1,NULL, $2,NULL);
 						resetLocalSpace();
 						}
-			|Fdef {
-						$$=$1;
+			|Fdef 	{	$$=$1;
 						resetLocalSpace();
 						}
 			;
 			
 Fdef:		Type newFID '(' validParamList ')' '{' LdeclBlock Body '}'  {
 							//$8 is a (slist+return) statement node
+							
 							$$ = createFuncDefNode($1->type,$2->name,$8);
-							resetLocalSpace();
+							
+							if(currCptr!=NULL){//paramlist check for method
+								struct Memberfunclist *mlist =currCptr->vfuncptr;
+								while(mlist!=NULL){
+									if(strcmp(mlist->name,$2->name)==0){
+										break;
+									}
+									mlist=mlist->next;
+								}
+								if(strcmp(mlist->name,$2->name)!=0){
+									yyerror("No such method declared");
+								}
+							
+							}else{	resetLocalSpace();}
 							}
 			
 	;
-newFID: ID {
-			struct localTable* currTable = gLookup($1->name);
-			if(currTable!=NULL){
-				localTableCreate($1->name);
-				currFunc=strdup($1->name);
+newFID: ID { printf("newfid %s\n",$1->name);
+			if(currCptr==NULL){
+				struct localTable* currTable = gLookup($1->name);
+				if(currTable!=NULL){
+					localTableCreate($1->name);
+					currFunc=strdup($1->name);
+				} else {
+						
+						yyerror("Did not declare this func\n");
+				}
 			} else {
-					yyerror("Did not declare this func\n");
+			//might be a method
+				struct Memberfunclist* currTable = mLookup($1->name,currCptr);
+				if(currTable!=NULL){
+					localTableCreate($1->name);
+					currFunc=strdup($1->name);
+				} else {
+						
+						yyerror("Did not declare this func\n");
+				}
+			
 			}
 };
 
 validParamList: ParamList {
 						//Name Equivalence
-						paramCheck(currFunc);
+						if(currCptr==NULL){
+							paramCheck(currFunc);
+						} else {
+							mParamCheck(currFunc);
+						}
+						printf("valid Function defn\n");
 }
 ;
 
@@ -213,7 +247,8 @@ ParamList	:  ParamList ',' Param  {
 						$$=$3;
 						}
 			|	Param	{
-						localEntryCreate(currFunc, $1->name, $1->type,$1->nodetype, getArgSpace());
+					localEntryCreate(currFunc, $1->name, $1->type,$1->nodetype, getArgSpace());
+					
 					}
 			|	{
 				$$=NULL;}
@@ -224,12 +259,6 @@ Param		: Type ID {
 						$2->nodetype=tVAR;
 						$$=$2;
 						}
-			| Type MUL ID {
-				//+10?
-				$3->type = $1->type;
-				$3->nodetype=tPVAR;
-				$$=$3;
-			}
 		   ;
 				
 LdeclBlock: DECL LDecList ENDDECL{} | DECL ENDDECL{}
@@ -239,25 +268,24 @@ LDecList :LDecList LDecl ';'{}
 		| LDecl ';'	{}
 ;
 
-LDecl: Type IdList {	
-						addIdListToLocal($1, $2);
+LDecl: Type IdList {	if(currCptr==NULL){
+							addIdListToLocal($1, $2);
+						} else {//add to classes' function's local tables
+								//Edit: actuall, no chang from how we did it befroe
+							addIdListToLocal($1, $2);
+						}
 					}
 ;
 
-IdList: IdList ',' IDVar {
+IdList: IdList ',' ID {
+				$3->nodetype=tVAR;
 				$3->middle =$1;
 				$$=$3;
 			}
-		| IDVar {$$=$1;}
+		| ID {$1->nodetype=tVAR;
+				$$=$1;}
 ;
-IDVar:	| ID	{
-				$1->nodetype=tVAR;
-				$$=$1;
-			}
-		| MUL ID	{
-				$2->nodetype=tPVAR;
-				$$=$2;
-		}
+
 ;
 
 Body	: BEG Slist Retstmt END {
@@ -280,14 +308,15 @@ MainBlock : Main '(' ')' '{' LdeclBlock Body '}'
 
 Main: INT MAIN {
 		currFunc=strdup("main");
-		gInstall("main",TLookup($1->name),tFUNC,0,0,0,NULL,NULL);
+		printf("INT main\n");
+		gInstall("main",TLookup("int"),tFUNC,0,0,0,NULL,NULL);
 		localTableCreate("main");
 		$$=$1;
 	}
 ;
 
 Slist : Slist Stmt ';' {
-		$$ = createTree(NULL,NULL, NULL,tCONNECT,NULL, $1,NULL, $2,NULL);
+		$$ = createTree(NULL,NULL,NULL, NULL,tCONNECT,NULL, $1,NULL, $2,NULL);
 	}
 	| Stmt ';'{
 		$$=$1;
@@ -302,28 +331,41 @@ Stmt : InputStmt	//defaults to $$=$1
 		|WhileStmt
 		|BrkContStmt
 		|Breakpoint
-		|Exit;
+		|Exit
+		|ID '=' NEW '(' ID ')' {
+				char *retFunc = strdup(currFunc);
+				$1 = createVariableNode($1);
+				
+				if(CLookup($5->name)==$1->ctype){
+					printf("New valid\n");
+					
+				}else {
+					yyerror("can't new");
+				}
+				currFunc=strdup($3->name);
+				$2 = createFuncCallNode("new",$5);
+				currFunc=retFunc;
+				
+				$$ = createAsgNode($1, $2);
+				}
+		|DELETE '(' Field ')'
 ;
 
-Breakpoint: BRKP {
-	$$ = createTree(NULL,NULL, NULL,tBRKP,NULL, NULL,NULL, NULL,NULL);	
-	};
-	
-Exit: EXIT {
-		$$=createExitNode();
-	}
 
-InputStmt: READ '(' Expr ')'		{
-										$$= createReadNode($3);
-								};
-
-OutputStmt: WRITE '(' Expr ')'	{	$$= createWriteNode($3);};
-
-AsgStmt: Var '=' Expr {
+AsgStmt:  ID '=' Expr {
 					//checks tht exp and id have same type, or rhs is NULL
+					$1=createVariableNode($1);
 					$$ = createAsgNode($1, $3);
-
-};
+					}
+		| Field '=' Expr {
+				printf("here-var feild\n");
+				$1=createFieldNode($1); 
+				//printf("Final type is: %s\n",$1->type->name);
+				$$ = createAsgNode($1, $3);
+		
+		}
+		
+;
 
 Field: ID '.' Field {	//do the check later
 						$1->middle=$3;
@@ -334,98 +376,32 @@ Field: ID '.' Field {	//do the check later
 						$1->middle=$3;
 						$$=$1;
 				}
-		|SELF '.' ID {}
+		|SELF '.' ID {
+			if(currCptr==NULL){
+				yyerror("Can't use self outside a method\n");
+			}
+				$1=createVarNode("self");
+				$1->ctype = currCptr;
+				$1->middle=$3;
+				$$=$1;
+		}
+;
+//Member functions of a class can access only its member fields, methods, local variables, arguments and methods of member fields.
+FieldFunction : SELF '.' ID '(' ArgList ')'	//TODO
+
+				//This will not occur inside a class.
+				
+				
+				|ID '.' ID '(' ArgList ')'{
+					char *retFunc = strdup(currFunc);
+					printf("here- method call\n");
+					currFunc=strdup($1->name);
+					$$ = createMethodCall($1->name,$3->name,$5);
+					currFunc=retFunc;
+				}
+				|ID '.' Field '(' ArgList ')' 
 ;
 
-FieldFunction : SELF '.' ID '(' Arglist ')'
-				|ID '.' ID '(' Arglist ')'  	//This will not occur inside a class.
-				|Field '.' ID '(' Arglist ')' 
-;
-Var:  Field {	$1=createFieldNode($1); 
-				//printf("Final type is: %s\n",$1->type->name);
-				$$ = $1;
-			}
-		|ID 			{	$$ = createVariableNode($1); //type checking is done
-							//t = alloc();
-						}
-		|MUL ID {		//*p=*p+1 turns to q=*p+1
-						if(lookup($2->name) != NULL){
-							$2->entry = lookup($2->name);							
-							if($2->entry->isLoc){
-								if($2->entry->localEntry->nodetype!=tPVAR){
-									yyerror("Type mismatch: Not declared as pointer variable\n");
-								}
-								$2->type=($2->entry->localEntry->type->prev);//-10;	//type says not pointer
-								
-							} else {
-								if($2->entry->globalEntry->nodetype!=tPVAR){
-								yyerror("Type mismatch: Not declared as pointer variable\n");
-								}
-								$2->type=($2->entry->globalEntry->type->prev);//-10;	//type says not pointer
-							}
-							$2->nodetype=tPVAR;				//nodetype says pointer
-							
-														
-						} else {
-							yyerror("Variable undeclared\n");
-						}
-						$$ = $2;
-		}
-		|ID '[' Expr ']' {	if(lookup($1->name) != NULL){
-								$1->entry = lookup($1->name);
-								//will never be a local variable, not even an argument
-								if(($1->entry)->globalEntry->nodetype!=tARR){
-									yyerror("Type mismatch: Not declared as array\n");
-								}
-								
-								$1->nodetype=tARR;
-								$1->type=($1->entry)->globalEntry->type;
-								
-								if(strcmp($3->type->name,"int")==0){
-									if(($3->nodetype==tNUM) && ( $3->val >= $1->entry->globalEntry->size[0])){
-										yyerror("Array out of bounds\n");
-									}
-								} else {
-									yyerror("Expected interger type as offset\n");
-								}
-								$1->middle=$3;
-							} else {
-								yyerror("Variable undeclared\n");
-							}				
-							$$ = $1;
-							}
-		| ID '[' Expr ']' '[' Expr ']'{
-							if(lookup($1->name) != NULL){
-								$1->entry = lookup($1->name);
-								//will never be a local variable, not even an argument
-								if(($1->entry)->globalEntry->nodetype!=tDARR){
-									yyerror("Type mismatch: Not declared as array\n");
-								}
-								
-								$1->nodetype=tDARR;
-								$1->type=($1->entry)->globalEntry->type;
-								
-								if(strcmp($3->type->name,"int")==0){
-									if(($3->nodetype==tNUM) && ( $3->val >= $1->entry->globalEntry->size[0])){
-										yyerror("Array out of bounds\n");
-									}
-								} else {
-									yyerror("Expected interger type as offset\n");
-								}
-								$1->middle=$3;
-								if(strcmp($6->type->name,"int")==0){
-									if(($6->nodetype==tNUM) && ( $6->val >= $1->entry->globalEntry->size[1])){
-										yyerror("Array out of bounds\n");
-									}
-								}
-								$1->right=$6;		
-								$$ = $1;
-							} else {
-								yyerror("Variable undeclared\n");
-							}	
-			
-		}
-		;
 
 IfStmt: IF '(' Expr ')' THEN Slist ELSE Slist ENDIF {
 							
@@ -485,164 +461,36 @@ Expr : Expr "+" Expr	{
 				//printf("Final type is: %s\n",$1->type->name);
 				$$ = $1;
 			}
-	| FieldFunction {}
+	| FieldFunction	 {
+			
+		}
 	| ID				{	
 							if(lookup($1->name) != NULL){
 								$1->entry = lookup($1->name);
 								//lookup creates the entry acc to where it finds the var declared
 								if($1->entry->isLoc){
+									
 									$1->type=($1->entry->localEntry)->type;
-									if(($1->entry->localEntry)->nodetype!=tVAR && ($1->entry->localEntry)->nodetype!=tPVAR){
+									if(($1->entry->localEntry)->nodetype!=tVAR){
 										printf("%s\n",$1->name);
-										yyerror("Type mismatch: Expected Var or PVar \n");
+										yyerror("Type mismatch: Expected Var\n");
 									}
 									$1->nodetype=$1->entry->localEntry->nodetype;
 								}
 								else {
 									$1->type=($1->entry->globalEntry)->type;								
-									if(($1->entry->globalEntry)->nodetype!=tVAR && ($1->entry->globalEntry)->nodetype!=tPVAR){
+									if(($1->entry->globalEntry)->nodetype!=tVAR){
 										yyerror("Type mismatch: Expected Var \n");
 									}
 									$1->nodetype=($1->entry->globalEntry)->nodetype;
 								}
+							} else if(currCptr!=NULL){
 							} else {
 								printf("%s\n:",$1->name);
 								yyerror("Variable undeclared\n");
 							}
 						$$ = $1;
-						}
-	| MUL ID {		
-					if(lookup($2->name) != NULL){
-						$2->entry = lookup($2->name);
-						if($2->entry->isLoc){						
-							if($2->entry->localEntry->nodetype==tPVAR){
-								$2->type=($2->entry->localEntry)->type->prev;//-10;
-								$2->nodetype=tDEREF;
-								$$=$2;
-							} else {
-								yyerror("Type mismatch: Expected Pointer\n");
-							}
-						} else {
-							if($2->entry->globalEntry->nodetype==tPVAR){
-									$2->type=($2->entry->globalEntry)->type->prev;//-10;
-									$2->nodetype=tDEREF;
-									$$=$2;
-								} else {
-									yyerror("Type mismatch: Expected Pointer\n");
-								}
-					
-							}
-					} else {
-						yyerror("Variable undeclared\n");
-					}
-					$$ = $2;
-			}	
-	| '&' ID {	
-				if(lookup($2->name) != NULL){
-						$2->entry = lookup($2->name);
-						
-						if($2->entry->isLoc){						
-								if($2->entry->localEntry->nodetype==tVAR){
-								$2->type=($2->entry->localEntry)->type->next;//+10;
-								$2->nodetype=tREF;
-								$$=$2;
-							} else {
-								yyerror("Type mismatch: Expected Variable after &\n");
-							}
-						} else {
-							if($2->entry->globalEntry->nodetype==tVAR){
-								$2->type=($2->entry->globalEntry)->type->next;//+10;
-								$2->nodetype=tREF;
-								$$=$2;
-							} else {
-								yyerror("Type mismatch: Expected Variable after &\n");
-							}
-						}
-					
-				} else {
-						yyerror("Variable undeclared\n");
-					}
-				$$ = $2;
-			}
-	| '&' ID '[' Expr ']' {
-					if(lookup($2->name) != NULL){
-						$2->entry = lookup($2->name);
-						//can't be local
-						if($2->entry->globalEntry->nodetype==tARR){
-								$2->type=($2->entry->globalEntry)->type->next;//+10;
-								$2->nodetype=tREF;
-								$$=$2;
-								if(strcmp($4->type->name,"int")==0){
-									$2->middle = $4;
-									if(($3->nodetype==tNUM) && ( $4->val >= $2->entry->globalEntry->size)){
-										yyerror("Array out of bounds\n");
-									}
-								} else {
-									yyerror("Expected integer type for array offset\n");
-								}
-						} else {
-								yyerror("Type mismatch: Expected Array after &\n");
-						}
-					} else {
-							yyerror("Array undeclared\n");
-						}
-				$$ = $2;
-					
-	}
-	|ID  '[' Expr ']' {
-						if(lookup($1->name) != NULL){
-								$1->entry = lookup($1->name);
-								//must be global
-								$1->type=($1->entry->globalEntry)->type;
-								if(($1->entry->globalEntry)->nodetype!=tARR){
-									yyerror("Type mismatch: Expected Array\n");
-								}
-								$1->nodetype=tARR;
-								if(strcmp($3->type->name,"int")==0){
-									$1->middle = $3;
-									if(($3->nodetype==tNUM) && ( $3->val >= $1->entry->globalEntry->size)){
-										yyerror("Array out of bounds\n");
-									}
-								} else {
-									yyerror("Expected integer type for array offset\n");
-								}
-								$$=$1;
-							} else {
-								yyerror("Variable undeclared\n");
-							}
-	
-	}
-	|ID  '[' Expr ']' '[' Expr ']' {
-						if(lookup($1->name) != NULL){
-								$1->entry = lookup($1->name);
-								$1->type=($1->entry->globalEntry)->type;
-								if(($1->entry->globalEntry)->nodetype!=tDARR){
-									yyerror("Type mismatch: Expected Double Array\n");
-								}
-								$1->nodetype=tDARR;
-								if(strcmp($3->type->name,"int")==0){
-									$1->middle = $3;
-									if(($3->nodetype==tNUM) && ( $3->val >= $1->entry->globalEntry->size[0])){
-										yyerror("Array out of bounds\n");
-									}
-								} else {
-									yyerror("Expected integer type for array offset\n");
-								}
-								if(strcmp($6->type->name,"int")==0){
-									$1->right = $6;
-									if(($6->nodetype==tNUM) && ( $6->val >= $1->entry->globalEntry->size[1])){
-										yyerror("Array out of bounds\n");
-									}
-								} else {
-									yyerror("Expected integer type for array offset\n");
-								}
-								$$=$1;
-							} else {
-								yyerror("Variable undeclared\n");
-							}
-	
-	}
-	
+						}	
 	| LIT {$$ = $1;}
 	| ID '(' ArgList ')'  {	char *retFunc = strdup(currFunc);
 							currFunc=strdup($1->name);
@@ -650,9 +498,9 @@ Expr : Expr "+" Expr	{
 							currFunc=retFunc;
 							}
 	| NULLTOKEN {
-		$1->type=TLookup("NULL");
-		$1->val=-1;
-		$1->nodetype=tNUM;
+					$1->type=TLookup("NULL");
+					$1->val=-1;
+					$1->nodetype=tNUM;
 		}
 
 ;
@@ -663,6 +511,20 @@ ArgList: ArgList ',' Expr {	$3->arglist=$1;
 		|{$$=NULL;}
 ;
 
+
+Breakpoint: BRKP {
+	$$ = createTree(NULL,NULL,NULL, NULL,tBRKP,NULL, NULL,NULL, NULL,NULL);	
+	};
+	
+Exit: EXIT {
+		$$=createExitNode();
+	}
+;
+InputStmt: READ '(' Expr ')'		{
+										$$= createReadNode($3);
+								};
+
+OutputStmt: WRITE '(' Expr ')'	{	$$= createWriteNode($3);};
 
 
 %%
